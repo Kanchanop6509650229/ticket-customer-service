@@ -39,6 +39,8 @@ build/
 **/application-local.properties
 **/application-local.yml
 **/application-local.yaml
+**/application-dev.properties
+**/application-prod.properties
 
 ### Sensitive Configuration ###
 **/src/main/resources/local.properties
@@ -57,6 +59,18 @@ build/
 **/keys.properties
 **/keys.yml
 **/keys.yaml
+
+### Specific Secrets to Protect ###
+# JWT Secrets
+**/application*.properties
+# Exclude non-sensitive parts of application.properties
+!**/application-example.properties
+!**/application-template.properties
+
+# Email credentials
+**/email*.properties
+**/mail*.properties
+**/smtp*.properties
 
 ### Logs ###
 /logs/

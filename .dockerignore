@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Sensitive configuration
+**/application-dev.properties
+**/application-local.properties
+**/application-prod.properties
+**/src/main/resources/local.properties
+**/src/main/resources/secret.properties
+**/credentials.json
+**/credentials.properties
+**/keys.json
+**/keys.properties
+
+# Build artifacts
+target/
+!target/ticket-customer-service-1.0.0.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+
+# Logs
+logs/
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Documentation
+README.md
+HELP.md
+LICENSE
