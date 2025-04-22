@@ -11,7 +11,9 @@ import com.eventticket.ticket.repository.BookingRepository;
 import com.eventticket.ticket.repository.TicketRepository;
 import com.eventticket.ticket.service.client.EventServiceClient;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +26,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class BookingService {
 
     // Default constructor for when dependency injection is not used
@@ -37,6 +38,7 @@ public class BookingService {
         // In normal Spring operation, the RequiredArgsConstructor will be used
     }
 
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
     private final EventServiceClient eventServiceClient;
