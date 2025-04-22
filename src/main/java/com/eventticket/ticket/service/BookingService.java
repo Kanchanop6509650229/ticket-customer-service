@@ -27,6 +27,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BookingService {
 
+    // Default constructor for when dependency injection is not used
+    public BookingService() {
+        // Initialize with null values - these will be properly injected when Spring creates the bean
+        this.bookingRepository = null;
+        this.ticketRepository = null;
+        this.eventServiceClient = null;
+        // Note: This constructor should only be used by frameworks or for testing
+        // In normal Spring operation, the RequiredArgsConstructor will be used
+    }
+
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
     private final EventServiceClient eventServiceClient;
@@ -52,7 +62,7 @@ public class BookingService {
         if (!"upcoming".equals(eventStatus.getCurrentStatus())) {
             throw new BusinessException("Cannot book tickets for an event that is not upcoming");
         }
-        
+
         // Find available tickets
         List<Ticket> availableTickets = ticketRepository.findByEventIdAndStatus(
                 bookingRequest.getEventId(),
@@ -61,20 +71,20 @@ public class BookingService {
          .filter(ticket -> ticket.getType().equals(bookingRequest.getTicketType()))
          .limit(bookingRequest.getQuantity())
          .collect(Collectors.toList());
-        
+
         if (availableTickets.size() < bookingRequest.getQuantity()) {
             throw new BusinessException("Not enough tickets available");
         }
-        
+
         // Update ticket status
         availableTickets.forEach(ticket -> ticket.setStatus(Ticket.TicketStatus.RESERVED));
         List<Ticket> reservedTickets = ticketRepository.saveAll(availableTickets);
-        
+
         // Calculate total amount
         BigDecimal totalAmount = reservedTickets.stream()
                 .map(Ticket::getPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
         // Create booking
         Booking booking = new Booking();
         booking.setUserId(bookingRequest.getUserId());
@@ -82,9 +92,9 @@ public class BookingService {
         booking.setTickets(reservedTickets);
         booking.setTotalAmount(totalAmount);
         booking.setStatus(Booking.BookingStatus.RESERVED);
-        
+
         Booking savedBooking = bookingRepository.save(booking);
-        
+
         return mapToBookingResponse(savedBooking);
     }
 
@@ -92,22 +102,22 @@ public class BookingService {
     public BookingResponse confirmBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
-        
+
         if (booking.getStatus() != Booking.BookingStatus.RESERVED) {
             throw new BusinessException("Booking is not in RESERVED status");
         }
-        
+
         booking.setStatus(Booking.BookingStatus.PAID);
-        
+
         // Update ticket status
         booking.getTickets().forEach(ticket -> {
             ticket.setStatus(Ticket.TicketStatus.SOLD);
             ticket.setOwnerId(booking.getUserId());
             ticket.setPurchaseDate(LocalDateTime.now());
         });
-        
+
         Booking savedBooking = bookingRepository.save(booking);
-        
+
         return mapToBookingResponse(savedBooking);
     }
 
@@ -115,22 +125,22 @@ public class BookingService {
     public BookingResponse cancelBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
-        
+
         if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
             throw new BusinessException("Booking is already cancelled");
         }
-        
+
         booking.setStatus(Booking.BookingStatus.CANCELLED);
-        
+
         // Update ticket status
         booking.getTickets().forEach(ticket -> {
             ticket.setStatus(Ticket.TicketStatus.AVAILABLE);
             ticket.setOwnerId(null);
             ticket.setPurchaseDate(null);
         });
-        
+
         Booking savedBooking = bookingRepository.save(booking);
-        
+
         return mapToBookingResponse(savedBooking);
     }
 
@@ -139,13 +149,13 @@ public class BookingService {
     public void expireReservations() {
         LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(BOOKING_EXPIRATION_MINUTES);
         List<Booking> expiredBookings = bookingRepository.findExpiredBookings(Booking.BookingStatus.RESERVED, expirationTime);
-        
+
         for (Booking booking : expiredBookings) {
             booking.setStatus(Booking.BookingStatus.EXPIRED);
-            
+
             // Update ticket status
             booking.getTickets().forEach(ticket -> ticket.setStatus(Ticket.TicketStatus.AVAILABLE));
-            
+
             bookingRepository.save(booking);
             log.info("Expired booking: {}", booking.getId());
         }
@@ -156,17 +166,17 @@ public class BookingService {
         response.setBookingId(booking.getId());
         response.setUserId(booking.getUserId());
         response.setEventId(booking.getEventId());
-        
+
         try {
             response.setEventName(eventServiceClient.getEventDetails(booking.getEventId()).getName());
         } catch (Exception e) {
             log.warn("Could not fetch event name for eventId: {}", booking.getEventId(), e);
             response.setEventName("Unknown Event");
         }
-        
+
         response.setStatus(booking.getStatus().toString());
         response.setTotalAmount(booking.getTotalAmount());
-        
+
         List<BookingResponse.TicketInfo> ticketInfos = new ArrayList<>();
         for (Ticket ticket : booking.getTickets()) {
             BookingResponse.TicketInfo ticketInfo = new BookingResponse.TicketInfo();
@@ -178,10 +188,10 @@ public class BookingService {
             ticketInfo.setStatus(ticket.getStatus().toString());
             ticketInfos.add(ticketInfo);
         }
-        
+
         response.setTickets(ticketInfos);
         response.setCreatedAt(booking.getCreatedAt());
-        
+
         return response;
     }
 }

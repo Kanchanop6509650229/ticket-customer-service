@@ -23,6 +23,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TicketService {
 
+    // Default constructor for when dependency injection is not used
+    public TicketService() {
+        // Initialize with null values - these will be properly injected when Spring creates the bean
+        this.ticketRepository = null;
+        this.eventServiceClient = null;
+        this.qrCodeGenerator = null;
+        this.ticketMapper = null;
+        // Note: This constructor should only be used by frameworks or for testing
+        // In normal Spring operation, the RequiredArgsConstructor will be used
+    }
+
     private final TicketRepository ticketRepository;
     private final EventServiceClient eventServiceClient;
     private final QRCodeGenerator qrCodeGenerator;
@@ -51,15 +62,15 @@ public class TicketService {
     public AvailabilityResponse getAvailabilityByEventId(String eventId) {
         EventResponse eventResponse = eventServiceClient.getEventDetails(eventId);
         List<Ticket> availableTickets = ticketRepository.findByEventIdAndStatus(eventId, Ticket.TicketStatus.AVAILABLE);
-        
+
         Map<String, Integer> availabilityByType = new HashMap<>();
         for (Ticket ticket : availableTickets) {
             availabilityByType.put(
-                ticket.getType(), 
+                ticket.getType(),
                 availabilityByType.getOrDefault(ticket.getType(), 0) + 1
             );
         }
-        
+
         AvailabilityResponse response = new AvailabilityResponse();
         response.setEventId(eventId);
         response.setEventName(eventResponse.getName());
@@ -67,7 +78,7 @@ public class TicketService {
         response.setSoldTickets((int) ticketRepository.countByEventIdAndStatus(eventId, Ticket.TicketStatus.SOLD));
         response.setAvailableTickets(availableTickets.size());
         response.setAvailabilityByType(availabilityByType);
-        
+
         return response;
     }
 
@@ -75,12 +86,12 @@ public class TicketService {
     public TicketDTO createTicket(TicketDTO ticketDTO) {
         Ticket ticket = ticketMapper.toEntity(ticketDTO);
         ticket.setStatus(Ticket.TicketStatus.AVAILABLE);
-        
+
         // Generate QR code for the ticket
         String qrCodeData = UUID.randomUUID().toString();
         String qrCodeBase64 = qrCodeGenerator.generateQRCodeBase64(qrCodeData);
         ticket.setQrCode(qrCodeBase64);
-        
+
         Ticket savedTicket = ticketRepository.save(ticket);
         return ticketMapper.toDto(savedTicket);
     }
@@ -88,26 +99,26 @@ public class TicketService {
     @Transactional
     public List<Ticket> createTicketsForEvent(String eventId, String ticketType, int quantity, BigDecimal price) {
         List<Ticket> tickets = new ArrayList<>();
-        
+
         for (int i = 0; i < quantity; i++) {
             Ticket ticket = new Ticket();
             ticket.setEventId(eventId);
             ticket.setType(ticketType);
             ticket.setPrice(price);
             ticket.setStatus(Ticket.TicketStatus.AVAILABLE);
-            
+
             // Generate random seat information
             ticket.setSection(generateRandomSection());
             ticket.setSeatNumber(generateSeatNumber(i));
-            
+
             // Generate QR code
             String qrCodeData = UUID.randomUUID().toString();
             String qrCodeBase64 = qrCodeGenerator.generateQRCodeBase64(qrCodeData);
             ticket.setQrCode(qrCodeBase64);
-            
+
             tickets.add(ticket);
         }
-        
+
         return ticketRepository.saveAll(tickets);
     }
 
@@ -115,7 +126,7 @@ public class TicketService {
     public TicketDTO updateTicketStatus(Long id, Ticket.TicketStatus status) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
-        
+
         ticket.setStatus(status);
         Ticket updatedTicket = ticketRepository.save(ticket);
         return ticketMapper.toDto(updatedTicket);
@@ -125,7 +136,7 @@ public class TicketService {
     public TicketDTO assignTicketToUser(Long id, Long userId) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
-        
+
         ticket.setOwnerId(userId);
         ticket.setStatus(Ticket.TicketStatus.SOLD);
         Ticket updatedTicket = ticketRepository.save(ticket);

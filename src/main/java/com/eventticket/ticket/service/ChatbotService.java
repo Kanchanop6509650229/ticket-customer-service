@@ -23,6 +23,17 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 public class ChatbotService {
 
+    // Default constructor for when dependency injection is not used
+    public ChatbotService() {
+        // Initialize with null values - these will be properly injected when Spring creates the bean
+        this.chatHistoryRepository = null;
+        this.eventServiceClient = null;
+        this.openRouterWebClient = null;
+        this.objectMapper = null;
+        // Note: This constructor should only be used by frameworks or for testing
+        // In normal Spring operation, the RequiredArgsConstructor will be used
+    }
+
     private final ChatHistoryRepository chatHistoryRepository;
     private final EventServiceClient eventServiceClient;
     private final WebClient openRouterWebClient;
@@ -45,7 +56,7 @@ public class ChatbotService {
         // Build prompt
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a helpful ticket booking assistant for an event/concert ticketing platform. ");
-        
+
         if (eventDetails != null) {
             prompt.append("Context: The user is asking about the event '")
                   .append(eventDetails.getName())
@@ -57,15 +68,15 @@ public class ChatbotService {
                   .append(eventDetails.getVenue())
                   .append(".");
         }
-        
+
         prompt.append("\n\nUser question: ").append(request.getQuery());
-        
+
         // Get response from LLM
         ChatbotResponse response = callOpenRouter(prompt.toString(), request);
-        
+
         // Save chat history
         saveChatHistory(request, response);
-        
+
         return response;
     }
 
@@ -88,11 +99,11 @@ public class ChatbotService {
             "question", "ต้องใช้เอกสารอะไรบ้างในการเข้างาน?",
             "answer", "ต้องแสดง QR Code ที่ได้รับหลังจากการจองตั๋วและบัตรประชาชนหรือพาสปอร์ตที่มีชื่อตรงกับการจอง"
         ));
-        
+
         // Find matching FAQ
         String matchedAnswer = null;
         List<Map<String, String>> relatedFaqs = new ArrayList<>();
-        
+
         for (Map<String, String> faq : faqs) {
             if (faq.get("question").toLowerCase().contains(request.getQuery().toLowerCase()) ||
                 request.getQuery().toLowerCase().contains(faq.get("question").toLowerCase().substring(0, Math.min(faq.get("question").length(), 10)))) {
@@ -101,16 +112,16 @@ public class ChatbotService {
                 relatedFaqs.add(faq);
             }
         }
-        
+
         // If no direct match, use LLM
         if (matchedAnswer == null) {
             return processBookingHelp(request);
         }
-        
+
         // Build response
         ChatbotResponse response = new ChatbotResponse();
         response.setAnswer(matchedAnswer);
-        
+
         // Add related FAQs (max 2)
         if (!relatedFaqs.isEmpty()) {
             Collections.shuffle(relatedFaqs);
@@ -123,12 +134,12 @@ public class ChatbotService {
             }
             response.setRelatedFaq(relatedFaqList);
         }
-        
+
         response.setConfidence(0.95);
-        
+
         // Save chat history
         saveChatHistory(request, response);
-        
+
         return response;
     }
 
@@ -136,46 +147,46 @@ public class ChatbotService {
         try {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", modelName);
-            
+
             List<Map<String, String>> messages = new ArrayList<>();
             messages.add(Map.of("role", "system", "content", "You are a helpful event ticketing assistant."));
             messages.add(Map.of("role", "user", "content", prompt));
             requestBody.put("messages", messages);
-            
+
             requestBody.put("temperature", 0.7);
             requestBody.put("max_tokens", 300);
-            
+
             String jsonResponse = openRouterWebClient.post()
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-            
+
             JsonNode responseJson = objectMapper.readTree(jsonResponse);
             String content = responseJson.path("choices").path(0).path("message").path("content").asText();
-            
+
             ChatbotResponse response = new ChatbotResponse();
             response.setAnswer(content);
             response.setConfidence(0.85);
-            
+
             // Get related FAQs
             List<ChatbotResponse.FAQ> relatedFaqs = new ArrayList<>();
             ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
             faq1.setQuestion("ต้องการดูวิธีชำระเงินสำหรับการจองตั๋ว");
             faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
             relatedFaqs.add(faq1);
-            
+
             ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
             faq2.setQuestion("มีนโยบายการคืนเงินอย่างไร");
             faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
             relatedFaqs.add(faq2);
-            
+
             response.setRelatedFaq(relatedFaqs);
-            
+
             return response;
         } catch (Exception e) {
             log.error("Error calling OpenRouter API", e);
-            
+
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();
             response.setAnswer("ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่ภายหลังหรือติดต่อฝ่ายบริการลูกค้าที่ support@eventticket.com");
@@ -185,6 +196,13 @@ public class ChatbotService {
     }
 
     private void saveChatHistory(ChatbotRequest request, ChatbotResponse response) {
+        // Check if repository is initialized
+        if (chatHistoryRepository == null) {
+            // Log warning when repository is not available
+            System.out.println("Warning: chatHistoryRepository is null, cannot save chat history");
+            return;
+        }
+
         ChatHistory chatHistory = new ChatHistory();
         chatHistory.setUserId(request.getUserId());
         chatHistory.setSessionId(request.getSessionId());
@@ -192,7 +210,7 @@ public class ChatbotService {
         chatHistory.setResponse(response.getAnswer());
         chatHistory.setEventId(request.getEventId());
         chatHistory.setConfidence(response.getConfidence());
-        
+
         chatHistoryRepository.save(chatHistory);
     }
 }
