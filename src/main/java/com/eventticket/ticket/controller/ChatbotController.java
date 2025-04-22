@@ -6,7 +6,7 @@ import com.eventticket.ticket.service.ChatbotService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,11 +14,15 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/chatbot")
-@RequiredArgsConstructor
 @Tag(name = "Chatbot API", description = "Endpoints for the ticket support chatbot")
 public class ChatbotController {
 
-    private final ChatbotService chatbotService;
+    private ChatbotService chatbotService;
+
+    @Autowired
+    public void setChatbotService(ChatbotService chatbotService) {
+        this.chatbotService = chatbotService;
+    }
 
     @PostMapping("/booking-help")
     @Operation(summary = "Get help with ticket booking", security = @SecurityRequirement(name = "JWT"))
