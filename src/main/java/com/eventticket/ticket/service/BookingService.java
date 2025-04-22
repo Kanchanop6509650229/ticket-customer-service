@@ -42,6 +42,23 @@ public class BookingService {
     private final EventServiceClient eventServiceClient;
     private static final int BOOKING_EXPIRATION_MINUTES = 15;
 
+    // Getters and Setters
+    public BookingRepository getBookingRepository() {
+        return bookingRepository;
+    }
+
+    public TicketRepository getTicketRepository() {
+        return ticketRepository;
+    }
+
+    public EventServiceClient getEventServiceClient() {
+        return eventServiceClient;
+    }
+
+    public static int getBookingExpirationMinutes() {
+        return BOOKING_EXPIRATION_MINUTES;
+    }
+
     public List<BookingResponse> getBookingsByUserId(Long userId) {
         List<Booking> bookings = bookingRepository.findByUserId(userId);
         return bookings.stream()

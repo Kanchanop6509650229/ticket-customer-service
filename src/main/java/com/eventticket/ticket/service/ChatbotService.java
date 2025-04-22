@@ -42,6 +42,31 @@ public class ChatbotService {
     @Value("${openrouter.api.model}")
     private String modelName;
 
+    // Getters and Setters
+    public ChatHistoryRepository getChatHistoryRepository() {
+        return chatHistoryRepository;
+    }
+
+    public EventServiceClient getEventServiceClient() {
+        return eventServiceClient;
+    }
+
+    public WebClient getOpenRouterWebClient() {
+        return openRouterWebClient;
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+
+    public String getModelName() {
+        return modelName;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
+    }
+
     public ChatbotResponse processBookingHelp(ChatbotRequest request) {
         // Fetch event details if available
         EventResponse eventDetails = null;
