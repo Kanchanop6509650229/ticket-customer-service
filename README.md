@@ -1,260 +1,158 @@
 # Ticket Customer Service
 
-This service is part of the Event/Concert Ticket Management System, responsible for managing tickets, bookings, and customer support through a chatbot.
+A Spring Boot application for managing tickets and customer bookings for events and concerts.
 
-## Services
+## Overview
 
-The Ticket Customer Service provides the following key services:
+The Ticket Customer Service is part of a microservices architecture for an event ticketing system. This service handles:
 
-1. **Ticket Information Service** - Provides information about tickets, including availability
-2. **Ticket Booking Service** - Manages the booking and purchase of tickets
-3. **Ticket Support Chatbot** - Provides customer support using LLM technology
+- Ticket management
+- Booking processing
+- Customer support via AI-powered chatbot
+- User authentication and authorization
 
-## Technology Stack
+## Technologies
 
-- Java 11
-- Spring Boot 2.7.3
-- Spring Security with JWT
-- Spring Data JPA
-- MySQL Database
-- Spring HATEOAS
-- OpenAPI/Swagger for documentation
-- Flyway for database migrations
-- DeepSeek API for LLM chatbot (in place of OpenAI)
+- **Java 21**
+- **Spring Boot 3.4.4**
+- **Spring Security** with JWT authentication
+- **Spring Data JPA** with MySQL
+- **Flyway** for database migrations
+- **DeepSeek AI** for chatbot functionality
+- **Swagger/OpenAPI** for API documentation
+- **Docker** for containerization
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
-
-- Java Development Kit (JDK) 11
-- Maven 3.6+
+- Java 21
+- Maven
 - MySQL 8.0+
-- Docker (optional)
+- Docker (optional, for containerized deployment)
 
-### Setup and Installation
+## Configuration
 
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/eventticket/ticket-customer-service.git
-   cd ticket-customer-service
-   ```
-
-2. **Configure database**
-
-   Create a MySQL database:
-
-   ```sql
-   CREATE DATABASE ticket_service_db;
-   ```
-
-3. **Set up configuration files securely**
-
-   Copy the template files to create your local configuration:
-
-   ```bash
-   cp src/main/resources/application-template.properties src/main/resources/application.properties
-   cp src/main/resources/application-dev-template.properties src/main/resources/application-dev.properties
-   cp src/main/resources/application-prod-template.properties src/main/resources/application-prod.properties
-   ```
-
-   Update these files with your actual credentials and secrets. These files are excluded from git by the .gitignore file.
-
-4. **Set API Keys and Secrets**
-
-   Update the following configuration in your local `application-dev.properties`:
-   - `spring.datasource.username`: Your database username
-   - `spring.datasource.password`: Your database password
-   - `deepseek.api.key`: Your DeepSeek API key
-
-   Update the following in your local `application.properties`:
-   - `app.jwt.secret`: A strong, randomly generated JWT secret key
-   - `event.service.api-key`: Your event service API key
-
-5. **Build the application**
-
-   ```bash
-   mvn clean package
-   ```
-
-6. **Run the application**
-
-   ```bash
-   java -jar target/ticket-customer-service-1.0.0.jar
-   ```
-
-   Or use Spring Boot Maven plugin:
-
-   ```bash
-   mvn spring-boot:run
-   ```
-
-### Docker Deployment
-
-Build the Docker image:
+The application uses a properties file for configuration. Copy the template file and adjust as needed:
 
 ```bash
-docker build -t ticket-customer-service:latest .
+cp src/main/resources/application-template.properties src/main/resources/application.properties
 ```
 
-Run the container using environment variables (recommended for security):
+### Key Configuration Properties
+
+- **Server**: Port and context path
+- **Database**: Connection details
+- **JWT**: Secret key and token configuration
+- **Event Service**: URL and API key for the event service
+- **DeepSeek API**: API key and model configuration
+
+## Database Setup
+
+The application uses Flyway for database migrations. The migrations will:
+
+1. Create necessary tables (users, roles, tickets, bookings, payments, chat_history)
+2. Insert initial data (roles, sample users)
+
+Ensure your MySQL server is running and the database exists:
+
+```sql
+CREATE DATABASE ticket_service_db;
+```
+
+## Building and Running
+
+### Using Maven
 
 ```bash
-# Create a .env file with your secrets (DO NOT commit this file)
-cat > .env << EOL
-DB_HOST=mysql-host
-DB_PORT=3306
-DB_NAME=ticket_service_db
-DB_USERNAME=your-username
-DB_PASSWORD=your-password
-DEEPSEEK_API_KEY=your-api-key
-EVENT_SERVICE_URL=http://event-service-host:8081/event-service
-EVENT_SERVICE_API_KEY=your-event-service-api-key
-JWT_SECRET=your-secure-jwt-secret
-ALLOWED_ORIGINS=https://your-frontend-domain.com
-EOL
+# Build the application
+mvn clean package
 
-# Run the container with environment variables from file
-docker run -p 8082:8082 --env-file .env ticket-customer-service:latest
+# Run the application
+java -jar target/ticket-customer-service-1.0.0.jar
 ```
 
-Alternatively, you can use Docker Compose for a more complete setup (recommended):
+### Using Docker
 
-```yaml
-# docker-compose.yml
-version: '3.8'
+```bash
+# Build the Docker image
+docker build -t ticket-customer-service .
 
-services:
-  ticket-service:
-    build: .
-    ports:
-      - "8082:8082"
-    env_file:
-      - .env
-    depends_on:
-      - mysql
-
-  mysql:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - mysql-data:/var/lib/mysql
-
-volumes:
-  mysql-data:
+# Run with Docker Compose
+docker-compose up -d
 ```
 
-## API Documentation
+## API Endpoints
 
-Once the application is running, you can access the Swagger documentation at:
+The application provides the following main API endpoints:
 
-```
-http://localhost:8082/ticket-service/swagger-ui.html
-```
+- **Authentication**: `/api/auth/**`
+- **Tickets**: `/api/tickets/**`
+- **Bookings**: `/api/bookings/**`
+- **Payments**: `/api/payments/**`
+- **Chatbot**: `/api/chatbot/**`
 
-The API is divided into three main sections:
+### Detailed Endpoint List
 
-1. **Ticket API** - Endpoints for managing tickets
-2. **Booking API** - Endpoints for booking management
-3. **Chatbot API** - Endpoints for the ticket support chatbot
+| Endpoint | Method | Description | Authentication Required |
+|----------|--------|-------------|------------------------|
+| **Authentication** |
+| `/api/auth/login` | POST | User login | No |
+| `/api/auth/register` | POST | Register new user | No |
+| **Tickets** |
+| `/api/tickets/event/{eventId}` | GET | Get all tickets for an event | Yes (ADMIN, ORGANIZER) |
+| `/api/tickets/public/availability/{eventId}` | GET | Get ticket availability for an event | No |
+| `/api/tickets/{id}` | GET | Get ticket by ID | Yes (USER, ADMIN, ORGANIZER) |
+| `/api/tickets/user/{userId}` | GET | Get tickets owned by a user | Yes (USER, ADMIN, owner) |
+| `/api/tickets` | POST | Create a new ticket | Yes (ADMIN, ORGANIZER) |
+| `/api/tickets/{id}/status` | PUT | Update ticket status | Yes (ADMIN, ORGANIZER) |
+| `/api/tickets/{id}/assign/{userId}` | PUT | Assign ticket to a user | Yes (ADMIN, ORGANIZER) |
+| **Bookings** |
+| `/api/bookings` | GET | Get bookings for a user | Yes (USER, ADMIN) |
+| `/api/bookings/{id}` | GET | Get booking by ID | Yes (USER, ADMIN, ORGANIZER) |
+| `/api/bookings` | POST | Create a new booking | Yes (USER, ADMIN, ORGANIZER) |
+| `/api/bookings/{id}/confirm` | PUT | Confirm a booking | Yes (USER, ADMIN, ORGANIZER) |
+| `/api/bookings/{id}` | DELETE | Cancel a booking | Yes (USER, ADMIN, ORGANIZER) |
+| `/api/bookings/{id}/payment` | POST | Process payment for a booking | Yes (USER, ADMIN) |
+| **Chatbot** |
+| `/api/chatbot/booking-help` | POST | Get help with ticket booking | Yes |
+| `/api/chatbot/faq` | POST | Get answers to frequently asked questions | No |
+| `/api/chatbot/event-info` | POST | Get information about events | Yes |
+
+For detailed API documentation, access the Swagger UI at:
+`http://localhost:8082/ticket-service/swagger-ui.html`
+
+## Chatbot Functionality
+
+The service includes an AI-powered chatbot for customer support using DeepSeek API. The chatbot can:
+
+- Answer FAQs about events and ticketing
+- Provide event-specific information
+- Help with booking-related queries
 
 ## Security
 
-### Authentication
+The application uses JWT for authentication. Public endpoints include:
 
-The API is secured using JWT authentication. To access protected endpoints, you'll need to:
+- Authentication endpoints
+- Public ticket information
+- FAQ chatbot endpoint
 
-1. Authenticate with the `/api/auth/login` endpoint (provided by a separate auth service)
-2. Include the JWT token in the Authorization header for subsequent requests:
-   ```
-   Authorization: Bearer <token>
-   ```
+All other endpoints require authentication.
 
-### Secure Configuration
+## Environment Variables
 
-**IMPORTANT: Never commit sensitive information to version control!**
+When running with Docker, the following environment variables can be set:
 
-This project uses the following security practices:
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
+- `JWT_SECRET`
+- `EVENT_SERVICE_URL`, `EVENT_SERVICE_API_KEY`
+- `DEEPSEEK_API_KEY`
+- `ALLOWED_ORIGINS`
 
-1. **Template Configuration Files**: Example configuration files with placeholders are provided as templates.
-2. **Environment-Specific Properties**: Sensitive configuration is separated into environment-specific files.
-3. **Environment Variables**: Production deployments use environment variables instead of configuration files.
-4. **.gitignore**: Configuration files with secrets are excluded from version control.
+## Development Notes
 
-### Secrets Management
-
-For local development:
-- Use the template files and create local copies that are not committed to git
-- Store your secrets in application-dev.properties (excluded by .gitignore)
-
-For production:
-- Use environment variables or a secure secrets management service
-- Never hardcode secrets in any files that might be committed
-- Rotate secrets regularly
-
-### Handling Secrets in CI/CD
-
-When using CI/CD pipelines:
-- Store secrets in your CI/CD platform's secure secrets storage
-- Inject secrets as environment variables during build/deployment
-- Never log or display secrets in build outputs
-
-### Security Tools
-
-This project includes several tools to help maintain security:
-
-1. **Git Hooks**: Pre-commit hooks to prevent accidental commits of sensitive information
-   ```bash
-   # Install the git hooks
-   git config core.hooksPath .git-hooks
-   chmod +x .git-hooks/*
-   ```
-
-2. **Secret Generation**: Script to generate secure random values for configuration
-   ```bash
-   # Generate secure secrets
-   ./scripts/generate-secrets.sh
-   ```
-
-3. **Secret Detection**: Script to check for potential secrets in the codebase
-   ```bash
-   # Check for potential secrets
-   ./scripts/check-for-secrets.sh
-   ```
-
-4. **Template Files**: Example configuration files with placeholders instead of real secrets
-   - `application-template.properties`
-   - `application-dev-template.properties`
-   - `application-prod-template.properties`
-   - `.env.template`
-
-5. **Secret Cleanup**: Guidance for cleaning up secrets that might have been committed
-   ```bash
-   # Get guidance on cleaning up secrets from git history
-   ./scripts/cleanup-secrets.sh
-   ```
-
-## Testing
-
-The application includes unit and integration tests. Run the tests with:
-
-```bash
-mvn test
-```
-
-## Communication with Event Service
-
-This service communicates with the Event Service to:
-
-1. Get event details
-2. Check event status before booking
-3. Search for events
-
-For development, make sure the Event Service is running on its designated port (default: 8081).
+- The application uses Spring AI with DeepSeek API for chatbot functionality
+- The service communicates with an Event Service for event details
+- Database schema is managed through Flyway migrations
 
 ## License
 
