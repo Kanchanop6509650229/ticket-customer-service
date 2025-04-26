@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,10 +29,11 @@ public class ChatbotService {
 
     private final ChatHistoryRepository chatHistoryRepository;
     private final EventServiceClient eventServiceClient;
-    private final WebClient openRouterWebClient;
+    @Qualifier("deepSeekWebClient")
+    private final WebClient deepSeekWebClient;
     private final ObjectMapper objectMapper;
 
-    @Value("${openrouter.api.model}")
+    @Value("${deepseek.api.model}")
     private String modelName;
 
     public ChatbotResponse processBookingHelp(ChatbotRequest request) {
@@ -64,7 +66,7 @@ public class ChatbotService {
         prompt.append("\n\nUser question: ").append(request.getQuery());
 
         // Get response from LLM
-        ChatbotResponse response = callOpenRouter(prompt.toString(), request);
+        ChatbotResponse response = callDeepSeek(prompt.toString(), request);
 
         // Save chat history
         saveChatHistory(request, response);
@@ -135,7 +137,7 @@ public class ChatbotService {
         return response;
     }
 
-    private ChatbotResponse callOpenRouter(String prompt, ChatbotRequest request) {
+    private ChatbotResponse callDeepSeek(String prompt, ChatbotRequest request) {
         // Note: request parameter is kept for future use (e.g., personalization based on user data)
         try {
             Map<String, Object> requestBody = new HashMap<>();
@@ -149,7 +151,7 @@ public class ChatbotService {
             requestBody.put("temperature", 0.7);
             requestBody.put("max_tokens", 300);
 
-            String jsonResponse = openRouterWebClient.post()
+            String jsonResponse = deepSeekWebClient.post()
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(String.class)
@@ -178,7 +180,7 @@ public class ChatbotService {
 
             return response;
         } catch (Exception e) {
-            log.error("Error calling OpenRouter API", e);
+            log.error("Error calling DeepSeek API", e);
 
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();

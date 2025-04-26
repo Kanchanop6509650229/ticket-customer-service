@@ -20,7 +20,7 @@ The Ticket Customer Service provides the following key services:
 - Spring HATEOAS
 - OpenAPI/Swagger for documentation
 - Flyway for database migrations
-- OpenRouter API for LLM chatbot (in place of OpenAI)
+- DeepSeek API for LLM chatbot (in place of OpenAI)
 
 ## Getting Started
 
@@ -65,7 +65,7 @@ The Ticket Customer Service provides the following key services:
    Update the following configuration in your local `application-dev.properties`:
    - `spring.datasource.username`: Your database username
    - `spring.datasource.password`: Your database password
-   - `openrouter.api.key`: Your OpenRouter API key
+   - `deepseek.api.key`: Your DeepSeek API key
 
    Update the following in your local `application.properties`:
    - `app.jwt.secret`: A strong, randomly generated JWT secret key
@@ -107,7 +107,7 @@ DB_PORT=3306
 DB_NAME=ticket_service_db
 DB_USERNAME=your-username
 DB_PASSWORD=your-password
-OPENROUTER_API_KEY=your-api-key
+DEEPSEEK_API_KEY=your-api-key
 EVENT_SERVICE_URL=http://event-service-host:8081/event-service
 EVENT_SERVICE_API_KEY=your-event-service-api-key
 JWT_SECRET=your-secure-jwt-secret

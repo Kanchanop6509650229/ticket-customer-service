@@ -6,20 +6,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
-public class OpenRouterConfig {
+public class DeepSeekConfig {
 
-    @Value("${openrouter.api.url}")
+    @Value("${deepseek.api.url}")
     private String apiUrl;
 
-    @Value("${openrouter.api.key}")
+    @Value("${deepseek.api.key}")
     private String apiKey;
 
     @Bean
-    public WebClient openRouterWebClient() {
+    public WebClient deepSeekWebClient() {
         return WebClient.builder()
                 .baseUrl(apiUrl)
                 .defaultHeader("Authorization", "Bearer " + apiKey)
-                .defaultHeader("HTTP-Referer", "https://eventticket.com")
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }

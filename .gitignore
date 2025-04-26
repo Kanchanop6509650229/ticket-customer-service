@@ -32,6 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 .history/
+my-cache/
+*.query
+query
 
 ### Environment Variables and Secrets ###
 .env
