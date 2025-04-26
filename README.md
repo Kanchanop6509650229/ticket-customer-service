@@ -58,6 +58,30 @@ Ensure your MySQL server is running and the database exists:
 CREATE DATABASE ticket_service_db;
 ```
 
+### Mock Data
+
+The application includes mock data for testing and development purposes:
+
+#### Users
+- **Admin User**: Username: `admin`, Password: `admin123`, Role: `ROLE_ADMIN`
+- **Organizer User**: Username: `organizer`, Password: `organizer123`, Role: `ROLE_ORGANIZER`
+- **Regular User**: Username: `user`, Password: `user123`, Role: `ROLE_USER`
+
+#### Events
+The mock data includes tickets for two sample events:
+- **BNK48 Concert** (event ID: `event123`)
+  - 5 VIP tickets (Section A, Seats A1-A5) at ฿5,000 each
+  - 5 Regular tickets (Section B, Seats B1-B5) at ฿2,500 each
+- **BNK48 Handshake** (event ID: `event456`)
+  - 5 Standard tickets (Main section, Seats M1-M5) at ฿1,500 each
+
+#### Bookings and Payments
+- Sample booking for the regular user with 2 VIP tickets for the BNK48 Concert
+- Payment record for the booking (฿10,000, status: COMPLETED)
+
+#### Chat History
+- Sample chat history entries with questions about refunds and event times
+
 ## Building and Running
 
 ### Using Maven
@@ -153,6 +177,8 @@ When running with Docker, the following environment variables can be set:
 - The application uses Spring AI with DeepSeek API for chatbot functionality
 - The service communicates with an Event Service for event details
 - Database schema is managed through Flyway migrations
+- Mock data is automatically loaded through Flyway migrations (V2__Insert_Initial_Data.sql)
+- You can use the mock user credentials for testing the application without setting up additional data
 
 ## License
 

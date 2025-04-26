@@ -48,10 +48,23 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Authentication endpoints
                 .requestMatchers("/api/auth/**").permitAll()
+
+                // Documentation endpoints
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
+                // Public ticket endpoints
                 .requestMatchers("/api/tickets/public/**").permitAll()
-                .requestMatchers("/api/chatbot/faq").permitAll()
+                .requestMatchers("/api/tickets/**").permitAll() // Make all ticket endpoints public
+
+                // Chatbot endpoints
+                .requestMatchers("/api/chatbot/**").permitAll() // Make all chatbot endpoints public
+
+                // Booking endpoints
+                .requestMatchers("/api/bookings/**").permitAll() // Make all booking endpoints public
+
+                // Require authentication for any other endpoints
                 .anyRequest().authenticated()
             );
 
