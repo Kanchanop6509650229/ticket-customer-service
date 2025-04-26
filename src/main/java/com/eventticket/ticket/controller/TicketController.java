@@ -16,6 +16,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,14 +27,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RestController
 @RequestMapping("/api/tickets")
 @Tag(name = "Ticket API", description = "Endpoints for managing tickets")
+@RequiredArgsConstructor
 public class TicketController {
 
-    private TicketService ticketService;
-
-    @Autowired
-    public void setTicketService(TicketService ticketService) {
-        this.ticketService = ticketService;
-    }
+    private final TicketService ticketService;
 
     @GetMapping("/event/{eventId}")
     @Operation(summary = "Get all tickets for an event", security = @SecurityRequirement(name = "JWT"))

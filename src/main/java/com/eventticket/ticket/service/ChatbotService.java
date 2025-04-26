@@ -10,6 +10,8 @@ import com.eventticket.ticket.service.client.EventServiceClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,20 +23,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatbotService {
-
-    private static final Logger log = LoggerFactory.getLogger(ChatbotService.class);
-
-    // Default constructor for when dependency injection is not used
-    public ChatbotService() {
-        // Initialize with null values - these will be properly injected when Spring creates the bean
-        this.chatHistoryRepository = null;
-        this.eventServiceClient = null;
-        this.openRouterWebClient = null;
-        this.objectMapper = null;
-        // Note: This constructor should only be used by frameworks or for testing
-        // In normal Spring operation, the RequiredArgsConstructor will be used
-    }
 
     private final ChatHistoryRepository chatHistoryRepository;
     private final EventServiceClient eventServiceClient;
@@ -43,31 +33,6 @@ public class ChatbotService {
 
     @Value("${openrouter.api.model}")
     private String modelName;
-
-    // Getters and Setters
-    public ChatHistoryRepository getChatHistoryRepository() {
-        return chatHistoryRepository;
-    }
-
-    public EventServiceClient getEventServiceClient() {
-        return eventServiceClient;
-    }
-
-    public WebClient getOpenRouterWebClient() {
-        return openRouterWebClient;
-    }
-
-    public ObjectMapper getObjectMapper() {
-        return objectMapper;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
 
     public ChatbotResponse processBookingHelp(ChatbotRequest request) {
         // Fetch event details if available

@@ -11,18 +11,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/chatbot")
 @Tag(name = "Chatbot API", description = "Endpoints for the ticket support chatbot")
+@RequiredArgsConstructor
 public class ChatbotController {
 
-    private ChatbotService chatbotService;
-
-    @Autowired
-    public void setChatbotService(ChatbotService chatbotService) {
-        this.chatbotService = chatbotService;
-    }
+    private final ChatbotService chatbotService;
 
     @PostMapping("/booking-help")
     @Operation(summary = "Get help with ticket booking", security = @SecurityRequirement(name = "JWT"))

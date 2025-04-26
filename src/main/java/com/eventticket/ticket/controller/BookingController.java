@@ -15,6 +15,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,14 +26,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RestController
 @RequestMapping("/api/bookings")
 @Tag(name = "Booking API", description = "Endpoints for managing ticket bookings")
+@RequiredArgsConstructor
 public class BookingController {
 
-    private BookingService bookingService;
-
-    @Autowired
-    public void setBookingService(BookingService bookingService) {
-        this.bookingService = bookingService;
-    }
+    private final BookingService bookingService;
 
     @GetMapping
     @Operation(summary = "Get bookings for a user", security = @SecurityRequirement(name = "JWT"))

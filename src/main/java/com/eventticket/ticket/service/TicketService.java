@@ -23,17 +23,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TicketService {
 
-    // Default constructor for when dependency injection is not used
-    public TicketService() {
-        // Initialize with null values - these will be properly injected when Spring creates the bean
-        this.ticketRepository = null;
-        this.eventServiceClient = null;
-        this.qrCodeGenerator = null;
-        this.ticketMapper = null;
-        // Note: This constructor should only be used by frameworks or for testing
-        // In normal Spring operation, the RequiredArgsConstructor will be used
-    }
-
     private final TicketRepository ticketRepository;
     private final EventServiceClient eventServiceClient;
     private final QRCodeGenerator qrCodeGenerator;

@@ -1,5 +1,5 @@
 # Use a specific version for better security and reproducibility
-FROM amazoncorretto:11.0.21-alpine3.18
+FROM amazoncorretto:21-alpine3.18
 
 # Create a non-root user to run the application
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

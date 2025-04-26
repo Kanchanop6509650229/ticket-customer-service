@@ -11,10 +11,12 @@ import com.eventticket.ticket.repository.BookingRepository;
 import com.eventticket.ticket.repository.TicketRepository;
 import com.eventticket.ticket.service.client.EventServiceClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,40 +28,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookingService {
 
-    // Default constructor for when dependency injection is not used
-    public BookingService() {
-        // Initialize with null values - these will be properly injected when Spring creates the bean
-        this.bookingRepository = null;
-        this.ticketRepository = null;
-        this.eventServiceClient = null;
-        // Note: This constructor should only be used by frameworks or for testing
-        // In normal Spring operation, the RequiredArgsConstructor will be used
-    }
-
-    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
     private final EventServiceClient eventServiceClient;
     private static final int BOOKING_EXPIRATION_MINUTES = 15;
-
-    // Getters and Setters
-    public BookingRepository getBookingRepository() {
-        return bookingRepository;
-    }
-
-    public TicketRepository getTicketRepository() {
-        return ticketRepository;
-    }
-
-    public EventServiceClient getEventServiceClient() {
-        return eventServiceClient;
-    }
-
-    public static int getBookingExpirationMinutes() {
-        return BOOKING_EXPIRATION_MINUTES;
-    }
 
     public List<BookingResponse> getBookingsByUserId(Long userId) {
         List<Booking> bookings = bookingRepository.findByUserId(userId);
