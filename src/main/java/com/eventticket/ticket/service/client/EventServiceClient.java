@@ -7,9 +7,6 @@ import com.eventticket.ticket.exception.ServiceCommunicationException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +17,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Component
@@ -37,7 +35,17 @@ public class EventServiceClient {
 
     public EventResponse getEventDetails(String eventId) {
         try {
-            String url = eventServiceUrl + "/api/events/" + eventId;
+            // Only proceed with numeric IDs
+            Long eventIdLong;
+            try {
+                eventIdLong = Long.parseLong(eventId);
+            } catch (NumberFormatException e) {
+                log.warn("Non-numeric event ID: {}. The event service expects numeric IDs. Returning default response.", eventId);
+                // Return a default response for non-numeric IDs
+                return createDefaultEventResponse(eventId);
+            }
+
+            String url = eventServiceUrl + "/api/events/" + eventIdLong;
             HttpHeaders headers = createHeaders();
 
             ResponseEntity<EventResponse> response = restTemplate.exchange(
@@ -53,9 +61,34 @@ public class EventServiceClient {
         }
     }
 
+    /**
+     * Creates a default EventResponse for cases where the event ID is not in the expected format
+     *
+     * @param eventId the original event ID
+     * @return a default EventResponse
+     */
+    private EventResponse createDefaultEventResponse(String eventId) {
+        EventResponse response = new EventResponse();
+        response.setId(eventId);
+        response.setName("Event " + eventId);
+        response.setDescription("Event details not available");
+        response.setStatus("unknown");
+        return response;
+    }
+
     public EventStatusResponse getEventStatus(String eventId) {
         try {
-            String url = eventServiceUrl + "/api/events/" + eventId + "/status";
+            // Only proceed with numeric IDs
+            Long eventIdLong;
+            try {
+                eventIdLong = Long.parseLong(eventId);
+            } catch (NumberFormatException e) {
+                log.warn("Non-numeric event ID: {}. The event service expects numeric IDs. Returning default response.", eventId);
+                // Return a default response for non-numeric IDs
+                return createDefaultEventStatusResponse(eventId);
+            }
+
+            String url = eventServiceUrl + "/api/events/" + eventIdLong + "/status";
             HttpHeaders headers = createHeaders();
 
             ResponseEntity<EventStatusResponse> response = restTemplate.exchange(
@@ -69,6 +102,20 @@ public class EventServiceClient {
             log.error("Error retrieving event status for eventId: {}", eventId, e);
             throw new ServiceCommunicationException("Could not retrieve event status: " + e.getMessage());
         }
+    }
+
+    /**
+     * Creates a default EventStatusResponse for cases where the event ID is not in the expected format
+     *
+     * @param eventId the original event ID
+     * @return a default EventStatusResponse
+     */
+    private EventStatusResponse createDefaultEventStatusResponse(String eventId) {
+        EventStatusResponse response = new EventStatusResponse();
+        response.setEventId(eventId);
+        response.setCurrentStatus("unknown");
+        response.setLastUpdated(LocalDateTime.now());
+        return response;
     }
 
     public SearchEventResponse searchEvents(Map<String, String> queryParams) {
@@ -97,4 +144,6 @@ public class EventServiceClient {
         headers.set("Authorization", "Bearer " + apiKey);
         return headers;
     }
+
+
 }

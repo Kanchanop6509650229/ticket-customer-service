@@ -38,7 +38,7 @@ public class Ticket {
 
     private String seatNumber;
 
-    @NotBlank
+    @NotNull
     @Enumerated(EnumType.STRING)
     private TicketStatus status;
 

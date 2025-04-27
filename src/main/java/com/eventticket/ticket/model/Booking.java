@@ -40,7 +40,7 @@ public class Booking {
     @Positive
     private BigDecimal totalAmount;
 
-    @NotBlank
+    @NotNull
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
 
