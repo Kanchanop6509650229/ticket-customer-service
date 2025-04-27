@@ -4,14 +4,15 @@ This document explains the security bypass configuration implemented in the tick
 
 ## Overview
 
-The application has been configured to bypass user authentication for most endpoints, allowing you to use the API without implementing a user service. This is achieved through two main changes:
+The application has been completely reconfigured to bypass user authentication for all endpoints, allowing you to use the API without implementing a user service. This is achieved through three main changes:
 
-1. Modified `SecurityConfig.java` to make most API endpoints public
-2. Added `MethodSecurityConfig.java` to bypass method-level security checks (`@PreAuthorize` annotations)
+1. Modified `SecurityConfig.java` to allow all requests without authentication
+2. Added `MockAuthenticationFilter.java` to automatically authenticate all requests with a mock user
+3. Added `MethodSecurityConfig.java` to disable method-level security checks (`@PreAuthorize` annotations)
 
 ## Available Endpoints Without Authentication
 
-The following endpoints can now be accessed without authentication:
+All endpoints in the application can now be accessed without authentication, including:
 
 ### Ticket Endpoints
 - `GET /api/tickets/event/{eventId}` - Get all tickets for an event
@@ -37,15 +38,20 @@ The following endpoints can now be accessed without authentication:
 
 ## How It Works
 
-1. The `SecurityConfig` class has been modified to allow public access to most API endpoints
-2. The `MethodSecurityConfig` class provides an `AuthorizationManager` bean that always returns `true`, effectively bypassing all `@PreAuthorize` annotations
+Our solution works at multiple levels to ensure complete bypass of authentication:
+
+1. **Web Security Level**: The `SecurityConfig` class has been modified to allow all requests without authentication.
+
+2. **Authentication Filter**: The `MockAuthenticationFilter` automatically authenticates all requests with a mock user that has all roles (USER, ADMIN, ORGANIZER).
+
+3. **Method Security Level**: The `MethodSecurityConfig` class disables method-level security checks, effectively bypassing all `@PreAuthorize` annotations in the controllers.
 
 ## Security Considerations
 
 This configuration is intended for development and testing purposes only. In a production environment, you should:
 
 1. Implement proper user authentication
-2. Remove the `MethodSecurityConfig` class
+2. Remove the `MockAuthenticationFilter` and `MethodSecurityConfig` classes
 3. Restore the original security configuration in `SecurityConfig.java`
 
 ## Usage Example
@@ -60,6 +66,9 @@ curl -X GET http://localhost:8082/ticket-service/api/tickets/event/event123
 curl -X POST http://localhost:8082/ticket-service/api/bookings \
   -H "Content-Type: application/json" \
   -d '{"userId": 1, "eventId": "event123", "ticketIds": [1, 2], "totalAmount": 5000.00}'
+
+# Get bookings for a user
+curl -X GET http://localhost:8082/ticket-service/api/bookings?userId=3
 ```
 
 ## API Documentation
