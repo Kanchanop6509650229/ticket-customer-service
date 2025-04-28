@@ -53,14 +53,14 @@ public class ChatbotService {
 
         if (eventDetails != null) {
             prompt.append("Context: The user is asking about the event '")
-                  .append(eventDetails.getName())
-                  .append("' which is a ")
-                  .append(eventDetails.getCategory())
-                  .append(" happening on ")
-                  .append(eventDetails.getDate())
-                  .append(" at ")
-                  .append(eventDetails.getVenue())
-                  .append(".");
+                    .append(eventDetails.getName())
+                    .append("' which is a ")
+                    .append(eventDetails.getCategory())
+                    .append(" happening on ")
+                    .append(eventDetails.getDate())
+                    .append(" at ")
+                    .append(eventDetails.getVenue())
+                    .append(".");
         }
 
         prompt.append("\n\nUser question: ").append(request.getQuery());
@@ -94,14 +94,14 @@ public class ChatbotService {
 
         if (eventDetails != null) {
             prompt.append("Context: The user is asking about the event '")
-                  .append(eventDetails.getName())
-                  .append("' which is a ")
-                  .append(eventDetails.getCategory())
-                  .append(" happening on ")
-                  .append(eventDetails.getDate())
-                  .append(" at ")
-                  .append(eventDetails.getVenue())
-                  .append(".");
+                    .append(eventDetails.getName())
+                    .append("' which is a ")
+                    .append(eventDetails.getCategory())
+                    .append(" happening on ")
+                    .append(eventDetails.getDate())
+                    .append(" at ")
+                    .append(eventDetails.getVenue())
+                    .append(".");
 
             // Add more detailed event information if available
             if (eventDetails.getDescription() != null && !eventDetails.getDescription().isEmpty()) {
@@ -136,21 +136,21 @@ public class ChatbotService {
         // Predefined FAQs with responses
         List<Map<String, String>> faqs = new ArrayList<>();
         faqs.add(Map.of(
-            "question", "มีส่วนลดสำหรับการจองเป็นกลุ่มหรือไม่?",
-            "answer", "สำหรับการจองตั๋วเป็นกลุ่ม 10 คนขึ้นไปจะได้รับส่วนลด 10% โดยต้องทำการจองผ่านช่องทางการขายกลุ่มโดยเฉพาะ"
-        ));
+                "question", "Are there discounts for group bookings?",
+                "answer",
+                "For group bookings of 10 people or more, a 10% discount is available. Bookings must be made through the dedicated group sales channel."));
         faqs.add(Map.of(
-            "question", "ต้องจองล่วงหน้านานแค่ไหนสำหรับกลุ่มใหญ่?",
-            "answer", "แนะนำให้จองล่วงหน้าอย่างน้อย 2 สัปดาห์สำหรับกลุ่มใหญ่ เพื่อให้มั่นใจว่าจะมีที่นั่งที่เพียงพอและอยู่ในโซนเดียวกัน"
-        ));
+                "question", "How far in advance should large groups book?",
+                "answer",
+                "We recommend booking at least 2 weeks in advance for large groups to ensure sufficient seating availability in the same zone."));
         faqs.add(Map.of(
-            "question", "มีนโยบายการคืนเงินอย่างไร?",
-            "answer", "สามารถขอคืนเงินได้หากยกเลิกการจองล่วงหน้าอย่างน้อย 7 วันก่อนวันจัดงาน โดยจะได้รับเงินคืน 80% ของมูลค่าตั๋ว"
-        ));
+                "question", "What is the refund policy?",
+                "answer",
+                "Refunds are available for cancellations made at least 7 days before the event date. You will receive 80% of the ticket value."));
         faqs.add(Map.of(
-            "question", "ต้องใช้เอกสารอะไรบ้างในการเข้างาน?",
-            "answer", "ต้องแสดง QR Code ที่ได้รับหลังจากการจองตั๋วและบัตรประชาชนหรือพาสปอร์ตที่มีชื่อตรงกับการจอง"
-        ));
+                "question", "What documents are required for entry?",
+                "answer",
+                "You must present the QR Code received after booking and an ID card or passport with a name matching the booking."));
 
         // Find matching FAQ
         String matchedAnswer = null;
@@ -158,7 +158,8 @@ public class ChatbotService {
 
         for (Map<String, String> faq : faqs) {
             if (faq.get("question").toLowerCase().contains(request.getQuery().toLowerCase()) ||
-                request.getQuery().toLowerCase().contains(faq.get("question").toLowerCase().substring(0, Math.min(faq.get("question").length(), 10)))) {
+                    request.getQuery().toLowerCase().contains(faq.get("question").toLowerCase().substring(0,
+                            Math.min(faq.get("question").length(), 10)))) {
                 matchedAnswer = faq.get("answer");
             } else if (!faq.get("question").equals(request.getQuery())) {
                 relatedFaqs.add(faq);
@@ -196,7 +197,8 @@ public class ChatbotService {
     }
 
     private ChatbotResponse callDeepSeek(String prompt, ChatbotRequest request) {
-        // Note: request parameter is kept for future use (e.g., personalization based on user data)
+        // Note: request parameter is kept for future use (e.g., personalization based
+        // on user data)
         try {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", modelName);
@@ -225,12 +227,12 @@ public class ChatbotService {
             // Get related FAQs
             List<ChatbotResponse.FAQ> relatedFaqs = new ArrayList<>();
             ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
-            faq1.setQuestion("ต้องการดูวิธีชำระเงินสำหรับการจองตั๋ว");
+            faq1.setQuestion("How to view payment methods for ticket booking");
             faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
             relatedFaqs.add(faq1);
 
             ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
-            faq2.setQuestion("มีนโยบายการคืนเงินอย่างไร");
+            faq2.setQuestion("What is the refund policy");
             faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
             relatedFaqs.add(faq2);
 
@@ -242,7 +244,8 @@ public class ChatbotService {
 
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();
-            response.setAnswer("ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่ภายหลังหรือติดต่อฝ่ายบริการลูกค้าที่ support@eventticket.com");
+            response.setAnswer(
+                    "Sorry, the system is temporarily unavailable. Please try again later or contact customer service at support@eventticket.com");
             response.setConfidence(0.5);
             return response;
         }
@@ -254,7 +257,8 @@ public class ChatbotService {
             requestBody.put("model", modelName);
 
             List<Map<String, String>> messages = new ArrayList<>();
-            messages.add(Map.of("role", "system", "content", "You are an event information specialist providing detailed information about events."));
+            messages.add(Map.of("role", "system", "content",
+                    "You are an event information specialist providing detailed information about events."));
             messages.add(Map.of("role", "user", "content", prompt));
             requestBody.put("messages", messages);
 
@@ -278,17 +282,17 @@ public class ChatbotService {
             List<ChatbotResponse.FAQ> relatedFaqs = new ArrayList<>();
 
             ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
-            faq1.setQuestion("มีที่จอดรถที่สถานที่จัดงานหรือไม่");
+            faq1.setQuestion("Is there parking available at the venue");
             faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
             relatedFaqs.add(faq1);
 
             ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
-            faq2.setQuestion("สามารถนำอาหารและเครื่องดื่มเข้างานได้หรือไม่");
+            faq2.setQuestion("Can I bring food and drinks to the event");
             faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
             relatedFaqs.add(faq2);
 
             ChatbotResponse.FAQ faq3 = new ChatbotResponse.FAQ();
-            faq3.setQuestion("มีการถ่ายทอดสดงานนี้หรือไม่");
+            faq3.setQuestion("Will this event be livestreamed");
             faq3.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
             relatedFaqs.add(faq3);
 
@@ -304,7 +308,8 @@ public class ChatbotService {
 
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();
-            response.setAnswer("ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่ภายหลังหรือติดต่อฝ่ายบริการลูกค้าที่ support@eventticket.com");
+            response.setAnswer(
+                    "Sorry, the system is temporarily unavailable. Please try again later or contact customer service at support@eventticket.com");
             response.setConfidence(0.5);
             return response;
         }

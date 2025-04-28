@@ -1,15 +1,12 @@
 package com.eventticket.ticket.dto;
 
-import lombok.Data;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
-@Data
-public class ChatbotRequest {
+public class ChatbotBookingHelpRequest {
 
     @NotBlank(message = "Query is required")
-    @Schema(description = "The user's question or query", example = "Are there discounts for group bookings?")
+    @Schema(description = "The user's question or query about booking", example = "What is the procedure for booking tickets for the BNK48 concert?")
     private String query;
 
     @Schema(description = "ID of the user making the query", example = "3")
