@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 public class ChatbotRequest {
 
     @NotBlank(message = "Query is required")
-    @Schema(description = "The user's question or query", example = "Are there discounts for group bookings?")
+    @Schema(description = "The user's question or query", example = "What time does the BNK48 Concert start?")
     private String query;
 
     @Schema(description = "ID of the user making the query", example = "3")

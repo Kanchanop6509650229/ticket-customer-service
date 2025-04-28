@@ -1,12 +1,13 @@
 package com.eventticket.ticket.controller;
 
 import com.eventticket.ticket.dto.BookingRequest;
+import com.eventticket.ticket.dto.PaymentRequest;
 import com.eventticket.ticket.dto.response.BookingResponse;
 import com.eventticket.ticket.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
@@ -106,9 +107,10 @@ public class BookingController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<EntityModel<BookingResponse>> processPayment(
             @PathVariable Long id,
-            @RequestBody String paymentId) {
+            @Valid @RequestBody PaymentRequest paymentRequest) {
 
         // This would typically call the payment service, but for simplicity, we're just confirming the booking
+        // In a real implementation, we would use paymentRequest.getPaymentId() and paymentRequest.getMethod()
         BookingResponse confirmedBooking = bookingService.confirmBooking(id);
 
         EntityModel<BookingResponse> resource = EntityModel.of(confirmedBooking,
