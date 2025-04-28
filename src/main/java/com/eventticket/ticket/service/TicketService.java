@@ -140,4 +140,26 @@ public class TicketService {
     private String generateSeatNumber(int index) {
         return String.format("%s%d", (char)('A' + (index / 20)), (index % 20) + 1);
     }
+
+    @Transactional
+    public List<TicketDTO> createMultipleTickets(List<TicketDTO> ticketDTOs) {
+        List<Ticket> tickets = new ArrayList<>();
+
+        for (TicketDTO ticketDTO : ticketDTOs) {
+            Ticket ticket = ticketMapper.toEntity(ticketDTO);
+            ticket.setStatus(Ticket.TicketStatus.AVAILABLE);
+
+            // Generate QR code for the ticket
+            String qrCodeData = UUID.randomUUID().toString();
+            String qrCodeBase64 = qrCodeGenerator.generateQRCodeBase64(qrCodeData);
+            ticket.setQrCode(qrCodeBase64);
+
+            tickets.add(ticket);
+        }
+
+        List<Ticket> savedTickets = ticketRepository.saveAll(tickets);
+        return savedTickets.stream()
+                .map(ticketMapper::toDto)
+                .collect(Collectors.toList());
+    }
 }

@@ -1,19 +1,29 @@
 package com.eventticket.ticket.controller;
 
+import com.eventticket.ticket.dto.TicketCreationRequest;
 import com.eventticket.ticket.dto.TicketDTO;
 import com.eventticket.ticket.dto.response.AvailabilityResponse;
 import com.eventticket.ticket.model.Ticket;
 import com.eventticket.ticket.service.TicketService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -88,16 +98,98 @@ public class TicketController {
     }
 
     @PostMapping
-    @Operation(summary = "Create a new ticket", security = @SecurityRequirement(name = "JWT"))
+    @Operation(
+        summary = "Create one or multiple tickets",
+        description = "Create a single ticket or multiple tickets at once. For multiple tickets, send an array of ticket objects.",
+        security = @SecurityRequirement(name = "JWT"),
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Single ticket object or array of ticket objects",
+            content = {
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(oneOf = {TicketCreationRequest.class, TicketCreationRequest[].class}),
+                    examples = {
+                        @ExampleObject(
+                            name = "Single Ticket",
+                            summary = "Example of creating a single ticket",
+                            value = "{\"eventId\":\"event123\",\"type\":\"VIP\",\"price\":5000.00,\"section\":\"A\",\"seatNumber\":\"A1\"}"
+                        ),
+                        @ExampleObject(
+                            name = "Multiple Tickets",
+                            summary = "Example of creating multiple tickets",
+                            value = "[{\"eventId\":\"event123\",\"type\":\"VIP\",\"price\":5000.00,\"section\":\"A\",\"seatNumber\":\"A1\"},{\"eventId\":\"event123\",\"type\":\"Regular\",\"price\":2000.00,\"section\":\"B\",\"seatNumber\":\"B1\"}]"
+                        )
+                    }
+                )
+            }
+        ),
+        responses = {
+            @ApiResponse(
+                responseCode = "200",
+                description = "Ticket(s) created successfully",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(oneOf = {TicketDTO.class, TicketDTO[].class})
+                )
+            ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Invalid ticket data provided"
+            )
+        }
+    )
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
-    public ResponseEntity<EntityModel<TicketDTO>> createTicket(@Valid @RequestBody TicketDTO ticketDTO) {
-        TicketDTO createdTicket = ticketService.createTicket(ticketDTO);
+    public ResponseEntity<?> createTickets(@Valid @RequestBody Object requestBody) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
 
-        EntityModel<TicketDTO> resource = EntityModel.of(createdTicket,
-                linkTo(methodOn(TicketController.class).getTicketById(createdTicket.getId())).withSelfRel(),
-                linkTo(methodOn(TicketController.class).getTicketsByEventId(createdTicket.getEventId())).withRel("event_tickets"));
+        // Check if the request is for multiple tickets
+        if (requestBody instanceof List) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> ticketMaps = (List<Map<String, Object>>) requestBody;
+                List<TicketDTO> ticketDTOs = ticketMaps.stream()
+                        .map(map -> mapper.convertValue(map, TicketDTO.class))
+                        .collect(Collectors.toList());
 
-        return ResponseEntity.ok(resource);
+                List<TicketDTO> createdTickets = ticketService.createMultipleTickets(ticketDTOs);
+
+                List<EntityModel<TicketDTO>> ticketResources = createdTickets.stream()
+                        .map(ticket -> EntityModel.of(ticket,
+                                linkTo(methodOn(TicketController.class).getTicketById(ticket.getId())).withSelfRel(),
+                                linkTo(methodOn(TicketController.class).getTicketsByEventId(ticket.getEventId())).withRel("event_tickets")))
+                        .collect(Collectors.toList());
+
+                // Use the event ID from the first ticket for the self link
+                String eventId = createdTickets.isEmpty() ? "" : createdTickets.get(0).getEventId();
+                Link link = linkTo(methodOn(TicketController.class).getTicketsByEventId(eventId)).withSelfRel();
+                CollectionModel<EntityModel<TicketDTO>> result = CollectionModel.of(ticketResources, link);
+
+                return ResponseEntity.ok(result);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Invalid ticket format in the list: " + e.getMessage());
+            }
+        }
+        // Handle single ticket creation
+        else if (requestBody instanceof Map) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> ticketMap = (Map<String, Object>) requestBody;
+                TicketDTO ticketDTO = mapper.convertValue(ticketMap, TicketDTO.class);
+
+                TicketDTO createdTicket = ticketService.createTicket(ticketDTO);
+
+                EntityModel<TicketDTO> resource = EntityModel.of(createdTicket,
+                        linkTo(methodOn(TicketController.class).getTicketById(createdTicket.getId())).withSelfRel(),
+                        linkTo(methodOn(TicketController.class).getTicketsByEventId(createdTicket.getEventId())).withRel("event_tickets"));
+
+                return ResponseEntity.ok(resource);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Invalid ticket format: " + e.getMessage());
+            }
+        } else {
+            return ResponseEntity.badRequest().body("Invalid request body format. Expected a ticket object or an array of tickets.");
+        }
     }
 
     @PutMapping("/{id}/status")
