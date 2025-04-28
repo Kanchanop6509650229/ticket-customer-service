@@ -101,14 +101,11 @@ public class BookingService {
             throw new BusinessException("Booking is not in RESERVED status");
         }
 
-        booking.setStatus(Booking.BookingStatus.PAID);
+        // Change status to CONFIRMED instead of PAID
+        booking.setStatus(Booking.BookingStatus.CONFIRMED);
 
-        // Update ticket status
-        booking.getTickets().forEach(ticket -> {
-            ticket.setStatus(Ticket.TicketStatus.SOLD);
-            ticket.setOwnerId(booking.getUserId());
-            ticket.setPurchaseDate(LocalDateTime.now());
-        });
+        // Don't update ticket status yet - this will happen after payment
+        // Tickets remain in RESERVED status until payment is processed
 
         Booking savedBooking = bookingRepository.save(booking);
 

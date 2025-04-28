@@ -3,7 +3,9 @@ package com.eventticket.ticket.controller;
 import com.eventticket.ticket.dto.BookingRequest;
 import com.eventticket.ticket.dto.PaymentRequest;
 import com.eventticket.ticket.dto.response.BookingResponse;
+import com.eventticket.ticket.dto.response.PaymentResponse;
 import com.eventticket.ticket.service.BookingService;
+import com.eventticket.ticket.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,6 +33,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final PaymentService paymentService;
 
     @GetMapping
     @Operation(summary = "Get bookings for a user", security = @SecurityRequirement(name = "JWT"))
@@ -70,6 +73,7 @@ public class BookingController {
     public ResponseEntity<EntityModel<BookingResponse>> createBooking(@Valid @RequestBody BookingRequest bookingRequest) {
         BookingResponse createdBooking = bookingService.createBooking(bookingRequest);
 
+        // Add links for the next steps in the booking flow
         EntityModel<BookingResponse> resource = EntityModel.of(createdBooking,
                 linkTo(methodOn(BookingController.class).getBookingById(createdBooking.getBookingId())).withSelfRel(),
                 linkTo(methodOn(BookingController.class).confirmBooking(createdBooking.getBookingId())).withRel("confirm"),
@@ -84,8 +88,10 @@ public class BookingController {
     public ResponseEntity<EntityModel<BookingResponse>> confirmBooking(@PathVariable Long id) {
         BookingResponse confirmedBooking = bookingService.confirmBooking(id);
 
+        // Add payment link as the next step after confirmation
         EntityModel<BookingResponse> resource = EntityModel.of(confirmedBooking,
-                linkTo(methodOn(BookingController.class).getBookingById(confirmedBooking.getBookingId())).withSelfRel());
+                linkTo(methodOn(BookingController.class).getBookingById(confirmedBooking.getBookingId())).withSelfRel(),
+                linkTo(methodOn(BookingController.class).processPayment(confirmedBooking.getBookingId(), null)).withRel("payment"));
 
         return ResponseEntity.ok(resource);
     }
@@ -105,16 +111,16 @@ public class BookingController {
     @PostMapping("/{id}/payment")
     @Operation(summary = "Process payment for a booking", security = @SecurityRequirement(name = "JWT"))
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<EntityModel<BookingResponse>> processPayment(
+    public ResponseEntity<EntityModel<PaymentResponse>> processPayment(
             @PathVariable Long id,
             @Valid @RequestBody PaymentRequest paymentRequest) {
 
-        // This would typically call the payment service, but for simplicity, we're just confirming the booking
-        // In a real implementation, we would use paymentRequest.getPaymentId() and paymentRequest.getMethod()
-        BookingResponse confirmedBooking = bookingService.confirmBooking(id);
+        // Process payment using the dedicated payment service
+        PaymentResponse paymentResponse = paymentService.processPayment(id, paymentRequest);
 
-        EntityModel<BookingResponse> resource = EntityModel.of(confirmedBooking,
-                linkTo(methodOn(BookingController.class).getBookingById(confirmedBooking.getBookingId())).withSelfRel());
+        // This is the final step in the booking process
+        EntityModel<PaymentResponse> resource = EntityModel.of(paymentResponse,
+                linkTo(methodOn(BookingController.class).getBookingById(paymentResponse.getBookingId())).withRel("booking_details"));
 
         return ResponseEntity.ok(resource);
     }
