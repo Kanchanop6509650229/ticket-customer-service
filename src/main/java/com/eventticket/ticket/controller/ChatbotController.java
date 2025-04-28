@@ -38,8 +38,8 @@ public class ChatbotController {
     @PostMapping("/event-info")
     @Operation(summary = "Get information about events", security = @SecurityRequirement(name = "JWT"))
     public ResponseEntity<ChatbotResponse> getEventInfo(@Valid @RequestBody ChatbotRequest request) {
-        // For event info, we'll also use the processBookingHelp method as it can handle event context
-        ChatbotResponse response = chatbotService.processBookingHelp(request);
+        // Use the dedicated event info processor for more detailed event information
+        ChatbotResponse response = chatbotService.processEventInfo(request);
         return ResponseEntity.ok(response);
     }
 }

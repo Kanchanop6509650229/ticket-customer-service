@@ -74,6 +74,64 @@ public class ChatbotService {
         return response;
     }
 
+    public ChatbotResponse processEventInfo(ChatbotRequest request) {
+        // Fetch event details if available
+        EventResponse eventDetails = null;
+        if (request.getEventId() != null && !request.getEventId().isEmpty()) {
+            try {
+                eventDetails = eventServiceClient.getEventDetails(request.getEventId());
+            } catch (Exception e) {
+                log.warn("Could not fetch event details for eventId: {}", request.getEventId(), e);
+            }
+        }
+
+        // Build prompt with focus on event information
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("You are an event information specialist for a ticketing platform. ");
+        prompt.append("Focus on providing detailed information about the event, such as artists, venue details, ");
+        prompt.append("event schedule, special requirements, and what attendees can expect. ");
+        prompt.append("Do not focus on the booking process unless specifically asked. ");
+
+        if (eventDetails != null) {
+            prompt.append("Context: The user is asking about the event '")
+                  .append(eventDetails.getName())
+                  .append("' which is a ")
+                  .append(eventDetails.getCategory())
+                  .append(" happening on ")
+                  .append(eventDetails.getDate())
+                  .append(" at ")
+                  .append(eventDetails.getVenue())
+                  .append(".");
+
+            // Add more detailed event information if available
+            if (eventDetails.getDescription() != null && !eventDetails.getDescription().isEmpty()) {
+                prompt.append(" Event description: ").append(eventDetails.getDescription());
+            }
+
+            if (eventDetails.getArtists() != null && !eventDetails.getArtists().isEmpty()) {
+                prompt.append(" Featured artists: ").append(String.join(", ", eventDetails.getArtists()));
+            }
+
+            if (eventDetails.getTime() != null) {
+                prompt.append(" Start time: ").append(eventDetails.getTime());
+            }
+
+            if (eventDetails.getDuration() != null) {
+                prompt.append(" Duration: ").append(eventDetails.getDuration()).append(" minutes");
+            }
+        }
+
+        prompt.append("\n\nUser question: ").append(request.getQuery());
+
+        // Get response from LLM
+        ChatbotResponse response = callDeepSeekForEventInfo(prompt.toString(), request);
+
+        // Save chat history
+        saveChatHistory(request, response);
+
+        return response;
+    }
+
     public ChatbotResponse processFaq(ChatbotRequest request) {
         // Predefined FAQs with responses
         List<Map<String, String>> faqs = new ArrayList<>();
@@ -181,6 +239,68 @@ public class ChatbotService {
             return response;
         } catch (Exception e) {
             log.error("Error calling DeepSeek API", e);
+
+            // Fallback response
+            ChatbotResponse response = new ChatbotResponse();
+            response.setAnswer("ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่ภายหลังหรือติดต่อฝ่ายบริการลูกค้าที่ support@eventticket.com");
+            response.setConfidence(0.5);
+            return response;
+        }
+    }
+
+    private ChatbotResponse callDeepSeekForEventInfo(String prompt, ChatbotRequest request) {
+        try {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", modelName);
+
+            List<Map<String, String>> messages = new ArrayList<>();
+            messages.add(Map.of("role", "system", "content", "You are an event information specialist providing detailed information about events."));
+            messages.add(Map.of("role", "user", "content", prompt));
+            requestBody.put("messages", messages);
+
+            requestBody.put("temperature", 0.7);
+            requestBody.put("max_tokens", 300);
+
+            String jsonResponse = deepSeekWebClient.post()
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            JsonNode responseJson = objectMapper.readTree(jsonResponse);
+            String content = responseJson.path("choices").path(0).path("message").path("content").asText();
+
+            ChatbotResponse response = new ChatbotResponse();
+            response.setAnswer(content);
+            response.setConfidence(0.9); // Higher confidence for event info
+
+            // Event-specific related FAQs
+            List<ChatbotResponse.FAQ> relatedFaqs = new ArrayList<>();
+
+            ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+            faq1.setQuestion("มีที่จอดรถที่สถานที่จัดงานหรือไม่");
+            faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq1);
+
+            ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+            faq2.setQuestion("สามารถนำอาหารและเครื่องดื่มเข้างานได้หรือไม่");
+            faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq2);
+
+            ChatbotResponse.FAQ faq3 = new ChatbotResponse.FAQ();
+            faq3.setQuestion("มีการถ่ายทอดสดงานนี้หรือไม่");
+            faq3.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq3);
+
+            // Randomly select 2 FAQs to show
+            Collections.shuffle(relatedFaqs);
+            relatedFaqs = relatedFaqs.subList(0, Math.min(2, relatedFaqs.size()));
+
+            response.setRelatedFaq(relatedFaqs);
+
+            return response;
+        } catch (Exception e) {
+            log.error("Error calling DeepSeek API for event info", e);
 
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();
