@@ -2,18 +2,23 @@ package com.eventticket.ticket.dto;
 
 import lombok.Data;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 @Data
 public class ChatbotRequest {
 
     @NotBlank(message = "Query is required")
+    @Schema(description = "The user's question or query", example = "What time does the BNK48 Concert start?")
     private String query;
 
+    @Schema(description = "ID of the user making the query", example = "3")
     private Long userId;
 
+    @Schema(description = "Session ID for tracking conversation context", example = "session123")
     private String sessionId;
 
+    @Schema(description = "ID of the event the user is asking about", example = "1")
     private String eventId;
 
     // Getters and Setters

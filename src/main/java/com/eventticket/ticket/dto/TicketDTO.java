@@ -1,6 +1,7 @@
 package com.eventticket.ticket.dto;
 
 import com.eventticket.ticket.model.Ticket;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,35 +16,48 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TicketDTO {
+    @Schema(description = "Unique identifier for the ticket", example = "1")
     private Long id;
 
     @NotBlank(message = "Event ID is required")
+    @Schema(description = "ID of the event this ticket is for", example = "1")
     private String eventId;
 
     @NotBlank(message = "Ticket type is required")
+    @Schema(description = "Type of ticket (VIP, Regular, etc.)", example = "VIP")
     private String type;
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
+    @Schema(description = "Price of the ticket", example = "5000.00")
     private BigDecimal price;
 
+    @Schema(description = "Section where the seat is located", example = "A")
     private String section;
 
+    @Schema(description = "Seat number within the section", example = "A1")
     private String seatNumber;
 
+    @Schema(description = "Current status of the ticket", example = "AVAILABLE")
     private Ticket.TicketStatus status;
 
+    @Schema(description = "ID of the user who owns this ticket", example = "3")
     private Long ownerId;
 
+    @Schema(description = "Date and time when the ticket was purchased", example = "2025-06-01T10:30:00")
     private LocalDateTime purchaseDate;
 
+    @Schema(description = "QR code for ticket validation", example = "https://example.com/qr/ticket1")
     private String qrCode;
 
+    @Schema(description = "Date and time when the ticket was created", example = "2025-05-15T09:00:00")
     private LocalDateTime createdAt;
 
+    @Schema(description = "Date and time when the ticket was last updated", example = "2025-05-15T09:00:00")
     private LocalDateTime updatedAt;
 
     // Additional fields for returning to client
+    @Schema(description = "Name of the event this ticket is for", example = "BNK48 Concert 2025")
     private String eventName;
 
     // Getters and Setters
