@@ -3,6 +3,7 @@ package com.eventticket.ticket.controller;
 import com.eventticket.ticket.dto.TicketCreationRequest;
 import com.eventticket.ticket.dto.TicketDTO;
 import com.eventticket.ticket.dto.response.AvailabilityResponse;
+import com.eventticket.ticket.dto.response.TicketStatisticsResponse;
 import com.eventticket.ticket.model.Ticket;
 import com.eventticket.ticket.service.TicketService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -222,5 +223,17 @@ public class TicketController {
                 linkTo(methodOn(TicketController.class).getTicketsByUserId(userId)).withRel("user_tickets"));
 
         return ResponseEntity.ok(resource);
+    }
+
+    @GetMapping("/event/{eventId}/statistics")
+    @Operation(
+        summary = "Get ticket sales statistics for an event",
+        description = "Provides detailed statistics about ticket sales for a specific event, including counts by status and revenue information.",
+        security = @SecurityRequirement(name = "JWT")
+    )
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    public ResponseEntity<TicketStatisticsResponse> getTicketStatistics(@PathVariable String eventId) {
+        TicketStatisticsResponse statistics = ticketService.getTicketStatistics(eventId);
+        return ResponseEntity.ok(statistics);
     }
 }

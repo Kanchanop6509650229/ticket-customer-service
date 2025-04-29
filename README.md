@@ -129,6 +129,7 @@ The application provides the following main API endpoints:
 | `/api/tickets` | POST | Create a new ticket | Yes (ADMIN, ORGANIZER) |
 | `/api/tickets/{id}/status` | PUT | Update ticket status | Yes (ADMIN, ORGANIZER) |
 | `/api/tickets/{id}/assign/{userId}` | PUT | Assign ticket to a user | Yes (ADMIN, ORGANIZER) |
+| `/api/tickets/event/{eventId}/statistics` | GET | Get ticket sales statistics for an event | Yes (ADMIN, ORGANIZER) |
 | **Bookings** |
 | `/api/bookings` | GET | Get bookings for a user | Yes (USER, ADMIN) |
 | `/api/bookings/{id}` | GET | Get booking by ID | Yes (USER, ADMIN, ORGANIZER) |
