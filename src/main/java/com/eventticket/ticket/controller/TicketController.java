@@ -228,8 +228,22 @@ public class TicketController {
     @GetMapping("/event/{eventId}/statistics")
     @Operation(
         summary = "Get ticket sales statistics for an event",
-        description = "Provides detailed statistics about ticket sales for a specific event, including counts by status and revenue information.",
-        security = @SecurityRequirement(name = "JWT")
+        description = "Returns detailed statistics about ticket sales for a specific event",
+        security = @SecurityRequirement(name = "JWT"),
+        responses = {
+            @ApiResponse(
+                responseCode = "200",
+                description = "Statistics retrieved successfully",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = TicketStatisticsResponse.class)
+                )
+            ),
+            @ApiResponse(
+                responseCode = "404",
+                description = "Event not found"
+            )
+        }
     )
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public ResponseEntity<TicketStatisticsResponse> getTicketStatistics(@PathVariable String eventId) {
