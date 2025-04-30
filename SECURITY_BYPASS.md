@@ -60,12 +60,12 @@ You can now make direct API calls without authentication. For example:
 
 ```bash
 # Get all tickets for an event
-curl -X GET http://localhost:8082/ticket-service/api/tickets/event/event123
+curl -X GET http://localhost:8082/ticket-service/api/tickets/event/1
 
 # Create a new booking
 curl -X POST http://localhost:8082/ticket-service/api/bookings \
   -H "Content-Type: application/json" \
-  -d '{"userId": 1, "eventId": "event123", "ticketIds": [1, 2], "totalAmount": 5000.00}'
+  -d '{"userId": 1, "eventId": "1", "ticketIds": [1, 2], "totalAmount": 5000.00}'
 
 # Get bookings for a user
 curl -X GET http://localhost:8082/ticket-service/api/bookings?userId=3

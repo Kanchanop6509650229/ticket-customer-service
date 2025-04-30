@@ -8,7 +8,7 @@ import java.util.Map;
 @Schema(description = "Response containing ticket sales statistics for an event")
 public class TicketStatisticsResponse {
 
-    @Schema(description = "ID of the event", example = "event123")
+    @Schema(description = "ID of the event", example = "1")
     private String eventId;
 
     @Schema(description = "Name of the event", example = "BNK48 Concert")

@@ -113,12 +113,12 @@ public class TicketController {
                         @ExampleObject(
                             name = "Single Ticket",
                             summary = "Example of creating a single ticket",
-                            value = "{\"eventId\":\"event123\",\"type\":\"VIP\",\"price\":5000.00,\"section\":\"A\",\"seatNumber\":\"A1\"}"
+                            value = "{\"eventId\":\"1\",\"type\":\"VIP\",\"price\":5000.00,\"section\":\"A\",\"seatNumber\":\"A1\"}"
                         ),
                         @ExampleObject(
                             name = "Multiple Tickets",
                             summary = "Example of creating multiple tickets",
-                            value = "[{\"eventId\":\"event123\",\"type\":\"VIP\",\"price\":5000.00,\"section\":\"A\",\"seatNumber\":\"A1\"},{\"eventId\":\"event123\",\"type\":\"Regular\",\"price\":2000.00,\"section\":\"B\",\"seatNumber\":\"B1\"}]"
+                            value = "[{\"eventId\":\"1\",\"type\":\"VIP\",\"price\":5000.00,\"section\":\"A\",\"seatNumber\":\"A1\"},{\"eventId\":\"1\",\"type\":\"Regular\",\"price\":2500.00,\"section\":\"B\",\"seatNumber\":\"B1\"}]"
                         )
                     }
                 )

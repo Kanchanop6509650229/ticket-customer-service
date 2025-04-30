@@ -68,12 +68,20 @@ The application includes mock data for testing and development purposes:
 - **Regular User**: Username: `user`, Password: `user123`, Role: `ROLE_USER`
 
 #### Events
-The mock data includes tickets for two sample events:
-- **BNK48 Concert** (event ID: `event123`)
+The mock data includes tickets for several sample events:
+- **BNK48 Concert 2025** (event ID: `1`)
   - 5 VIP tickets (Section A, Seats A1-A5) at ฿5,000 each
   - 5 Regular tickets (Section B, Seats B1-B5) at ฿2,500 each
-- **BNK48 Handshake** (event ID: `event456`)
+  - 5 Economy tickets (Section C, Seats C1-C5) at ฿1,500 each
+- **BNK48 Handshake Event** (event ID: `2`)
   - 5 Standard tickets (Main section, Seats M1-M5) at ฿1,500 each
+- **Slot Machine Live in Bangkok** (event ID: `3`)
+  - 3 VIP tickets (Section A, Seats A1-A3) at ฿3,500 each
+  - 3 Regular tickets (Section B, Seats B1-B3) at ฿2,000 each
+- **Thai Rock Festival 2025** (event ID: `4`)
+  - 2 VIP tickets (Section A, Seats A1-A2) at ฿4,500 each
+  - 2 Regular tickets (Section B, Seats B1-B2) at ฿2,500 each
+  - 2 Standing tickets (Section C, Seats C1-C2) at ฿1,800 each
 
 #### Bookings and Payments
 - Sample booking for the regular user with 2 VIP tickets for the BNK48 Concert

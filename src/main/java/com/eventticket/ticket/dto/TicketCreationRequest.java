@@ -16,19 +16,19 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Schema(description = "Request object for creating a ticket")
 public class TicketCreationRequest {
-    
-    @Schema(description = "ID of the event this ticket is for", example = "event123", required = true)
+
+    @Schema(description = "ID of the event this ticket is for", example = "1", required = true)
     private String eventId;
-    
+
     @Schema(description = "Type of ticket (VIP, Regular, etc.)", example = "VIP", required = true)
     private String type;
-    
+
     @Schema(description = "Price of the ticket", example = "5000.00", required = true)
     private BigDecimal price;
-    
+
     @Schema(description = "Section where the seat is located", example = "A")
     private String section;
-    
+
     @Schema(description = "Seat number within the section", example = "A1")
     private String seatNumber;
 }
