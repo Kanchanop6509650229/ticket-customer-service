@@ -315,6 +315,143 @@ public class ChatbotService {
         }
     }
 
+    public ChatbotResponse processEventRecommendations(ChatbotRequest request, String category) {
+        try {
+            // Create a map of query parameters for the search
+            Map<String, String> queryParams = new HashMap<>();
+
+            // Add category filter if provided
+            if (category != null && !category.isEmpty()) {
+                queryParams.put("category", category);
+            }
+
+            // Set default parameters for recommendations
+            queryParams.put("page", "0");
+            queryParams.put("size", "5");
+            queryParams.put("sortBy", "date");
+            queryParams.put("sortDirection", "asc");
+
+            // Call the event service to search for events
+            SearchEventResponse searchResponse = eventServiceClient.searchEvents(queryParams);
+
+            // Build prompt with focus on event recommendations
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("You are an event recommendation specialist for a ticketing platform. ");
+            prompt.append("Focus on recommending events to users based on their interests. ");
+
+            if (category != null && !category.isEmpty()) {
+                prompt.append("The user is interested in ").append(category).append(" events. ");
+            }
+
+            prompt.append("Here are some events that might interest the user:\n\n");
+
+            // Add event details to the prompt
+            if (searchResponse != null && searchResponse.getResults() != null && !searchResponse.getResults().isEmpty()) {
+                for (SearchEventResponse.EventSummary event : searchResponse.getResults()) {
+                    prompt.append("- ").append(event.getName())
+                          .append(" (").append(event.getDate()).append(")")
+                          .append(" at ").append(event.getVenue());
+
+                    if (event.getTicketPrice() != null) {
+                        prompt.append(", tickets from $").append(event.getTicketPrice().getMin())
+                              .append(" to $").append(event.getTicketPrice().getMax());
+                    }
+
+                    prompt.append("\n");
+                }
+            } else {
+                prompt.append("No events found matching the criteria.\n");
+            }
+
+            prompt.append("\nUser question: ").append(request.getQuery());
+
+            // Get response from LLM
+            ChatbotResponse response = callDeepSeekForEventRecommendations(prompt.toString(), request);
+
+            // Save chat history
+            saveChatHistory(request, response);
+
+            return response;
+        } catch (Exception e) {
+            // Log error
+            System.err.println("Error processing event recommendations: " + e.getMessage());
+            e.printStackTrace();
+
+            // Fallback response
+            ChatbotResponse response = new ChatbotResponse();
+            response.setAnswer(
+                    "Sorry, I couldn't find any event recommendations at the moment. Please try again later or contact customer service for assistance.");
+            response.setConfidence(0.5);
+            return response;
+        }
+    }
+
+    private ChatbotResponse callDeepSeekForEventRecommendations(String prompt, ChatbotRequest request) {
+        try {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", modelName);
+
+            List<Map<String, String>> messages = new ArrayList<>();
+            messages.add(Map.of("role", "system", "content",
+                    "You are an event recommendation specialist helping users discover events they might enjoy."));
+            messages.add(Map.of("role", "user", "content", prompt));
+            requestBody.put("messages", messages);
+
+            requestBody.put("temperature", 0.7);
+            requestBody.put("max_tokens", 300);
+
+            String jsonResponse = deepSeekWebClient.post()
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            JsonNode responseJson = objectMapper.readTree(jsonResponse);
+            String content = responseJson.path("choices").path(0).path("message").path("content").asText();
+
+            ChatbotResponse response = new ChatbotResponse();
+            response.setAnswer(content);
+            response.setConfidence(0.9); // High confidence for recommendations
+
+            // Recommendation-specific related FAQs
+            List<ChatbotResponse.FAQ> relatedFaqs = new ArrayList<>();
+
+            ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+            faq1.setQuestion("How do I book tickets for these events");
+            faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq1);
+
+            ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+            faq2.setQuestion("Are there any upcoming concerts");
+            faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq2);
+
+            ChatbotResponse.FAQ faq3 = new ChatbotResponse.FAQ();
+            faq3.setQuestion("What are the most popular events this month");
+            faq3.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq3);
+
+            // Randomly select 2 FAQs to show
+            Collections.shuffle(relatedFaqs);
+            relatedFaqs = relatedFaqs.subList(0, Math.min(2, relatedFaqs.size()));
+
+            response.setRelatedFaq(relatedFaqs);
+
+            return response;
+        } catch (Exception e) {
+            // Log error
+            System.err.println("Error calling DeepSeek API for event recommendations: " + e.getMessage());
+            e.printStackTrace();
+
+            // Fallback response
+            ChatbotResponse response = new ChatbotResponse();
+            response.setAnswer(
+                    "Sorry, I couldn't generate event recommendations at the moment. Please try again later or contact customer service for assistance.");
+            response.setConfidence(0.5);
+            return response;
+        }
+    }
+
     private void saveChatHistory(ChatbotRequest request, ChatbotResponse response) {
         // Check if repository is initialized
         if (chatHistoryRepository == null) {

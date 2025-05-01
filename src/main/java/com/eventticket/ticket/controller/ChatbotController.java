@@ -2,6 +2,7 @@ package com.eventticket.ticket.controller;
 
 import com.eventticket.ticket.dto.ChatbotBookingHelpRequest;
 import com.eventticket.ticket.dto.ChatbotEventInfoRequest;
+import com.eventticket.ticket.dto.ChatbotEventRecommendationRequest;
 import com.eventticket.ticket.dto.ChatbotFaqRequest;
 import com.eventticket.ticket.dto.ChatbotRequest;
 import com.eventticket.ticket.dto.response.ChatbotResponse;
@@ -64,6 +65,20 @@ public class ChatbotController {
 
         // Use the dedicated event info processor for more detailed event information
         ChatbotResponse response = chatbotService.processEventInfo(chatbotRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/event-recommendations")
+    @Operation(summary = "Get event recommendations by category", security = @SecurityRequirement(name = "JWT"))
+    public ResponseEntity<ChatbotResponse> getEventRecommendations(@Valid @RequestBody ChatbotEventRecommendationRequest request) {
+        // Convert to ChatbotRequest for service compatibility
+        ChatbotRequest chatbotRequest = new ChatbotRequest();
+        chatbotRequest.setQuery(request.getQuery());
+        chatbotRequest.setUserId(request.getUserId());
+        chatbotRequest.setSessionId(request.getSessionId());
+
+        // Process the event recommendations with category
+        ChatbotResponse response = chatbotService.processEventRecommendations(chatbotRequest, request.getCategory());
         return ResponseEntity.ok(response);
     }
 }

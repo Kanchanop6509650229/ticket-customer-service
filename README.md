@@ -148,6 +148,7 @@ The application provides the following main API endpoints:
 | `/api/chatbot/booking-help` | POST | Get help with ticket booking | Yes |
 | `/api/chatbot/faq` | POST | Get answers to frequently asked questions | No |
 | `/api/chatbot/event-info` | POST | Get information about events | Yes |
+| `/api/chatbot/event-recommendations` | POST | Get event recommendations by category | Yes |
 
 For detailed API documentation, access the Swagger UI at:
 `http://localhost:8082/ticket-service/swagger-ui.html`
@@ -159,6 +160,7 @@ The service includes an AI-powered chatbot for customer support using DeepSeek A
 - Answer FAQs about events and ticketing
 - Provide event-specific information
 - Help with booking-related queries
+- Recommend events based on categories
 
 ## Security
 
