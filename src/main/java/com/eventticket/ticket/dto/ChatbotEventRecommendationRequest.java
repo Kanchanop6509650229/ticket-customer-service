@@ -8,7 +8,7 @@ import lombok.Data;
 public class ChatbotEventRecommendationRequest {
 
     @NotBlank(message = "Query is required")
-    @Schema(description = "The user's question or query about event recommendations", example = "Recommend me some concerts")
+    @Schema(description = "The user's question or query about event recommendations", example = "Is there any rock concerts are scheduled in Bangkok during July 2025? I'm particularly interested in the venue, start time, and duration of these events.")
     private String query;
 
     @Schema(description = "ID of the user making the query", example = "3")
@@ -16,9 +16,6 @@ public class ChatbotEventRecommendationRequest {
 
     @Schema(description = "Session ID for tracking conversation context", example = "session123")
     private String sessionId;
-
-    @Schema(description = "Category of events to recommend", example = "Concert")
-    private String category;
 
     // Getters and Setters
     public String getQuery() {
@@ -43,13 +40,5 @@ public class ChatbotEventRecommendationRequest {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
     }
 }
