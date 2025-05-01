@@ -160,7 +160,13 @@ The service includes an AI-powered chatbot for customer support using DeepSeek A
 - Answer FAQs about events and ticketing
 - Provide event-specific information
 - Help with booking-related queries
-- Recommend events based on categories
+- Recommend events based on multiple filters:
+  - Category (e.g., Concert, Festival, Sports)
+  - Price range
+  - Date range
+  - Location (city, country)
+  - Venue
+  - Group size
 
 ## Security
 

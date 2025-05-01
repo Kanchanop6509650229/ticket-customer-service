@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -316,48 +317,301 @@ public class ChatbotService {
     }
 
     public ChatbotResponse processEventRecommendations(ChatbotRequest request, String category) {
-        try {
-            // Create a map of query parameters for the search
-            Map<String, String> queryParams = new HashMap<>();
+        // For backward compatibility, call the new method with only category filter
+        return processEventRecommendationsWithFilters(
+            request, category, null, null, null, null, null, null, null, null
+        );
+    }
 
-            // Add category filter if provided
+    public ChatbotResponse processEventRecommendationsWithFilters(
+            ChatbotRequest request,
+            String category,
+            Integer minPrice,
+            Integer maxPrice,
+            LocalDate dateFrom,
+            LocalDate dateTo,
+            String city,
+            String country,
+            Integer numberOfPeople,
+            String venueName) {
+
+        // Create a map to track which filters were successfully applied
+        Map<String, Boolean> appliedFilters = new HashMap<>();
+        SearchEventResponse searchResponse = null;
+        List<String> failedFilters = new ArrayList<>();
+
+        try {
+            // First try with just the category filter as it's most likely to work
             if (category != null && !category.isEmpty()) {
-                queryParams.put("category", category);
+                Map<String, String> basicParams = new HashMap<>();
+                basicParams.put("category", category);
+                basicParams.put("page", "0");
+                basicParams.put("size", "5");
+                basicParams.put("sortBy", "date");
+                basicParams.put("sortDirection", "asc");
+
+                try {
+                    searchResponse = eventServiceClient.searchEvents(basicParams);
+                    appliedFilters.put("category", true);
+                } catch (Exception e) {
+                    System.err.println("Error with basic category search: " + e.getMessage());
+                    failedFilters.add("category");
+                    appliedFilters.put("category", false);
+                }
             }
 
-            // Set default parameters for recommendations
-            queryParams.put("page", "0");
-            queryParams.put("size", "5");
-            queryParams.put("sortBy", "date");
-            queryParams.put("sortDirection", "asc");
+            // If we don't have results yet, try with no filters
+            if (searchResponse == null || searchResponse.getResults() == null || searchResponse.getResults().isEmpty()) {
+                Map<String, String> minimalParams = new HashMap<>();
+                minimalParams.put("page", "0");
+                minimalParams.put("size", "5");
+                minimalParams.put("sortBy", "date");
+                minimalParams.put("sortDirection", "asc");
 
-            // Call the event service to search for events
-            SearchEventResponse searchResponse = eventServiceClient.searchEvents(queryParams);
+                try {
+                    searchResponse = eventServiceClient.searchEvents(minimalParams);
+                } catch (Exception e) {
+                    System.err.println("Error with minimal search: " + e.getMessage());
+                }
+            }
+
+            // Try to apply date filters if we have results
+            if (dateFrom != null || dateTo != null) {
+                Map<String, String> dateParams = new HashMap<>();
+                if (category != null && !category.isEmpty() && appliedFilters.getOrDefault("category", false)) {
+                    dateParams.put("category", category);
+                }
+
+                if (dateFrom != null) {
+                    dateParams.put("dateFrom", dateFrom.toString());
+                }
+
+                if (dateTo != null) {
+                    dateParams.put("dateTo", dateTo.toString());
+                }
+
+                dateParams.put("page", "0");
+                dateParams.put("size", "5");
+                dateParams.put("sortBy", "date");
+                dateParams.put("sortDirection", "asc");
+
+                try {
+                    SearchEventResponse dateResponse = eventServiceClient.searchEvents(dateParams);
+                    if (dateResponse != null && dateResponse.getResults() != null && !dateResponse.getResults().isEmpty()) {
+                        searchResponse = dateResponse;
+                        if (dateFrom != null) appliedFilters.put("dateFrom", true);
+                        if (dateTo != null) appliedFilters.put("dateTo", true);
+                    } else {
+                        if (dateFrom != null) failedFilters.add("date range start");
+                        if (dateTo != null) failedFilters.add("date range end");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error with date filter search: " + e.getMessage());
+                    if (dateFrom != null) failedFilters.add("date range start");
+                    if (dateTo != null) failedFilters.add("date range end");
+                }
+            }
+
+            // Try to apply price filters
+            if (minPrice != null || maxPrice != null) {
+                Map<String, String> priceParams = new HashMap<>();
+                if (category != null && !category.isEmpty() && appliedFilters.getOrDefault("category", false)) {
+                    priceParams.put("category", category);
+                }
+
+                if (minPrice != null) {
+                    priceParams.put("minPrice", minPrice.toString());
+                }
+
+                if (maxPrice != null) {
+                    priceParams.put("maxPrice", maxPrice.toString());
+                }
+
+                priceParams.put("page", "0");
+                priceParams.put("size", "5");
+                priceParams.put("sortBy", "date");
+                priceParams.put("sortDirection", "asc");
+
+                try {
+                    SearchEventResponse priceResponse = eventServiceClient.searchEvents(priceParams);
+                    if (priceResponse != null && priceResponse.getResults() != null && !priceResponse.getResults().isEmpty()) {
+                        searchResponse = priceResponse;
+                        if (minPrice != null) appliedFilters.put("minPrice", true);
+                        if (maxPrice != null) appliedFilters.put("maxPrice", true);
+                    } else {
+                        if (minPrice != null) failedFilters.add("minimum price");
+                        if (maxPrice != null) failedFilters.add("maximum price");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error with price filter search: " + e.getMessage());
+                    if (minPrice != null) failedFilters.add("minimum price");
+                    if (maxPrice != null) failedFilters.add("maximum price");
+                }
+            }
+
+            // Try location filters
+            if (city != null && !city.isEmpty() || country != null && !country.isEmpty()) {
+                Map<String, String> locationParams = new HashMap<>();
+                if (category != null && !category.isEmpty() && appliedFilters.getOrDefault("category", false)) {
+                    locationParams.put("category", category);
+                }
+
+                if (city != null && !city.isEmpty()) {
+                    locationParams.put("city", city);
+                }
+
+                if (country != null && !country.isEmpty()) {
+                    locationParams.put("country", country);
+                }
+
+                locationParams.put("page", "0");
+                locationParams.put("size", "5");
+                locationParams.put("sortBy", "date");
+                locationParams.put("sortDirection", "asc");
+
+                try {
+                    SearchEventResponse locationResponse = eventServiceClient.searchEvents(locationParams);
+                    if (locationResponse != null && locationResponse.getResults() != null && !locationResponse.getResults().isEmpty()) {
+                        searchResponse = locationResponse;
+                        if (city != null && !city.isEmpty()) appliedFilters.put("city", true);
+                        if (country != null && !country.isEmpty()) appliedFilters.put("country", true);
+                    } else {
+                        if (city != null && !city.isEmpty()) failedFilters.add("city");
+                        if (country != null && !country.isEmpty()) failedFilters.add("country");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error with location filter search: " + e.getMessage());
+                    if (city != null && !city.isEmpty()) failedFilters.add("city");
+                    if (country != null && !country.isEmpty()) failedFilters.add("country");
+                }
+            }
+
+            // Try venue filter
+            if (venueName != null && !venueName.isEmpty()) {
+                Map<String, String> venueParams = new HashMap<>();
+                if (category != null && !category.isEmpty() && appliedFilters.getOrDefault("category", false)) {
+                    venueParams.put("category", category);
+                }
+
+                venueParams.put("venueName", venueName);
+                venueParams.put("page", "0");
+                venueParams.put("size", "5");
+                venueParams.put("sortBy", "date");
+                venueParams.put("sortDirection", "asc");
+
+                try {
+                    SearchEventResponse venueResponse = eventServiceClient.searchEvents(venueParams);
+                    if (venueResponse != null && venueResponse.getResults() != null && !venueResponse.getResults().isEmpty()) {
+                        searchResponse = venueResponse;
+                        appliedFilters.put("venueName", true);
+                    } else {
+                        failedFilters.add("venue");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error with venue filter search: " + e.getMessage());
+                    failedFilters.add("venue");
+                }
+            }
 
             // Build prompt with focus on event recommendations
             StringBuilder prompt = new StringBuilder();
             prompt.append("You are an event recommendation specialist for a ticketing platform. ");
-            prompt.append("Focus on recommending events to users based on their interests. ");
+            prompt.append("Focus on recommending events to users based on their interests and filters. ");
 
+            // Add filter information to the prompt
             if (category != null && !category.isEmpty()) {
                 prompt.append("The user is interested in ").append(category).append(" events. ");
             }
 
-            prompt.append("Here are some events that might interest the user:\n\n");
+            if (minPrice != null || maxPrice != null) {
+                prompt.append("Price range: ");
+                if (minPrice != null) {
+                    prompt.append("minimum $").append(minPrice);
+                }
+                if (minPrice != null && maxPrice != null) {
+                    prompt.append(" to ");
+                }
+                if (maxPrice != null) {
+                    prompt.append("maximum $").append(maxPrice);
+                }
+                prompt.append(". ");
+            }
+
+            if (dateFrom != null || dateTo != null) {
+                prompt.append("Date range: ");
+                if (dateFrom != null) {
+                    prompt.append("from ").append(dateFrom);
+                }
+                if (dateFrom != null && dateTo != null) {
+                    prompt.append(" to ");
+                }
+                if (dateTo != null) {
+                    prompt.append("until ").append(dateTo);
+                }
+                prompt.append(". ");
+            }
+
+            if (city != null && !city.isEmpty()) {
+                prompt.append("Location: ").append(city);
+                if (country != null && !country.isEmpty()) {
+                    prompt.append(", ").append(country);
+                }
+                prompt.append(". ");
+            } else if (country != null && !country.isEmpty()) {
+                prompt.append("Country: ").append(country).append(". ");
+            }
+
+            if (venueName != null && !venueName.isEmpty()) {
+                prompt.append("Venue: ").append(venueName).append(". ");
+            }
+
+            if (numberOfPeople != null && numberOfPeople > 1) {
+                prompt.append("Looking for events suitable for a group of ").append(numberOfPeople).append(" people. ");
+            }
+
+            // Add information about filters that couldn't be applied
+            if (!failedFilters.isEmpty()) {
+                prompt.append("\nNote: I couldn't filter by the following criteria due to system limitations: ");
+                prompt.append(String.join(", ", failedFilters));
+                prompt.append(". The recommendations below may not match all your requirements. ");
+            }
+
+            prompt.append("\nHere are some events that might interest the user:\n\n");
 
             // Add event details to the prompt
-            if (searchResponse != null && searchResponse.getResults() != null && !searchResponse.getResults().isEmpty()) {
-                for (SearchEventResponse.EventSummary event : searchResponse.getResults()) {
-                    prompt.append("- ").append(event.getName())
-                          .append(" (").append(event.getDate()).append(")")
-                          .append(" at ").append(event.getVenue());
+            if (searchResponse != null) {
+                // Create an empty list as fallback
+                List<SearchEventResponse.EventSummary> eventList = new ArrayList<>();
 
-                    if (event.getTicketPrice() != null) {
-                        prompt.append(", tickets from $").append(event.getTicketPrice().getMin())
-                              .append(" to $").append(event.getTicketPrice().getMax());
+                // Try to extract events from the response
+                try {
+                    // Use reflection to access the results field
+                    java.lang.reflect.Field resultsField = searchResponse.getClass().getDeclaredField("results");
+                    resultsField.setAccessible(true);
+                    Object resultsObj = resultsField.get(searchResponse);
+                    if (resultsObj instanceof List) {
+                        eventList = (List<SearchEventResponse.EventSummary>) resultsObj;
                     }
+                } catch (Exception ex) {
+                    // Ignore errors accessing results
+                }
 
-                    prompt.append("\n");
+                if (eventList != null && !eventList.isEmpty()) {
+                    for (int i = 0; i < eventList.size(); i++) {
+                        prompt.append("- Event ").append(i+1).append(": ");
+
+                        try {
+                            // Just use simple string representation of the event
+                            prompt.append(eventList.get(i).toString());
+                        } catch (Exception ex2) {
+                            // If any field access fails, just provide basic info
+                            prompt.append("Details unavailable");
+                        }
+
+                        prompt.append("\n");
+                    }
+                } else {
+                    prompt.append("No events found matching the criteria.\n");
                 }
             } else {
                 prompt.append("No events found matching the criteria.\n");
@@ -377,12 +631,101 @@ public class ChatbotService {
             System.err.println("Error processing event recommendations: " + e.getMessage());
             e.printStackTrace();
 
-            // Fallback response
-            ChatbotResponse response = new ChatbotResponse();
-            response.setAnswer(
-                    "Sorry, I couldn't find any event recommendations at the moment. Please try again later or contact customer service for assistance.");
-            response.setConfidence(0.5);
-            return response;
+            // Try to get some basic recommendations without filters
+            try {
+                Map<String, String> minimalParams = new HashMap<>();
+                minimalParams.put("page", "0");
+                minimalParams.put("size", "5");
+                minimalParams.put("sortBy", "date");
+                minimalParams.put("sortDirection", "asc");
+
+                searchResponse = eventServiceClient.searchEvents(minimalParams);
+
+                StringBuilder fallbackPrompt = new StringBuilder();
+                fallbackPrompt.append("You are an event recommendation specialist for a ticketing platform. ");
+                fallbackPrompt.append("The user asked for specific event recommendations, but our filtering system encountered an error. ");
+                fallbackPrompt.append("Please apologize for not being able to apply their specific filters and offer these general recommendations instead. ");
+
+                if (category != null && !category.isEmpty()) {
+                    fallbackPrompt.append("They were looking for ").append(category).append(" events. ");
+                }
+
+                fallbackPrompt.append("\nHere are some general events that might interest the user:\n\n");
+
+                if (searchResponse != null) {
+                    // Create an empty list as fallback
+                    List<SearchEventResponse.EventSummary> eventList = new ArrayList<>();
+
+                    // Try to extract events from the response
+                    if (searchResponse != null) {
+                        try {
+                            // Use reflection to access the results field
+                            java.lang.reflect.Field resultsField = searchResponse.getClass().getDeclaredField("results");
+                            resultsField.setAccessible(true);
+                            Object resultsObj = resultsField.get(searchResponse);
+                            if (resultsObj instanceof List) {
+                                eventList = (List<SearchEventResponse.EventSummary>) resultsObj;
+                            }
+                        } catch (Exception ex) {
+                            // Ignore errors accessing results
+                        }
+                    }
+
+                    if (eventList != null && !eventList.isEmpty()) {
+                        for (int i = 0; i < eventList.size(); i++) {
+                            fallbackPrompt.append("- Event ").append(i+1).append(": ");
+
+                            try {
+                                // Just use simple string representation of the event
+                                fallbackPrompt.append(eventList.get(i).toString());
+                            } catch (Exception ex2) {
+                                // If any field access fails, just provide basic info
+                                fallbackPrompt.append("Details unavailable");
+                            }
+
+                            fallbackPrompt.append("\n");
+                        }
+                    } else {
+                        fallbackPrompt.append("No events found in our system at the moment.\n");
+                    }
+                } else {
+                    fallbackPrompt.append("No events found in our system at the moment.\n");
+                }
+
+                fallbackPrompt.append("\nUser question: ").append(request.getQuery());
+
+                ChatbotResponse response = callDeepSeekForEventRecommendations(fallbackPrompt.toString(), request);
+                saveChatHistory(request, response);
+                return response;
+
+            } catch (Exception fallbackError) {
+                System.err.println("Error with fallback recommendations: " + fallbackError.getMessage());
+
+                // Ultimate fallback response if everything fails
+                ChatbotResponse response = new ChatbotResponse();
+                response.setAnswer(
+                        "I apologize, but I'm having trouble accessing our event database at the moment. " +
+                        "Please try again later with simpler filters or contact customer service for assistance " +
+                        "in finding events that match your specific requirements.");
+                response.setConfidence(0.5);
+
+                // Add some generic related FAQs
+                List<ChatbotResponse.FAQ> relatedFaqs = new ArrayList<>();
+
+                ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+                faq1.setQuestion("What events are trending this month?");
+                faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+                relatedFaqs.add(faq1);
+
+                ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+                faq2.setQuestion("How can I browse all upcoming events?");
+                faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+                relatedFaqs.add(faq2);
+
+                response.setRelatedFaq(relatedFaqs);
+
+                return response;
+            }
         }
     }
 
