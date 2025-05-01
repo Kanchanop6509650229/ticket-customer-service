@@ -69,7 +69,7 @@ public class ChatbotController {
     }
 
     @PostMapping("/event-recommendations")
-    @Operation(summary = "Get event recommendations with filters", security = @SecurityRequirement(name = "JWT"))
+    @Operation(summary = "Get event recommendations based on user query", security = @SecurityRequirement(name = "JWT"))
     public ResponseEntity<ChatbotResponse> getEventRecommendations(@Valid @RequestBody ChatbotEventRecommendationRequest request) {
         // Convert to ChatbotRequest for service compatibility
         ChatbotRequest chatbotRequest = new ChatbotRequest();
@@ -77,19 +77,8 @@ public class ChatbotController {
         chatbotRequest.setUserId(request.getUserId());
         chatbotRequest.setSessionId(request.getSessionId());
 
-        // Process the event recommendations with all filters
-        ChatbotResponse response = chatbotService.processEventRecommendationsWithFilters(
-            chatbotRequest,
-            request.getCategory(),
-            request.getMinPrice(),
-            request.getMaxPrice(),
-            request.getDateFrom(),
-            request.getDateTo(),
-            request.getCity(),
-            request.getCountry(),
-            request.getNumberOfPeople(),
-            request.getVenueName()
-        );
+        // Process the event recommendations - category is optional and will be inferred if not provided
+        ChatbotResponse response = chatbotService.processEventRecommendations(chatbotRequest);
         return ResponseEntity.ok(response);
     }
 }
