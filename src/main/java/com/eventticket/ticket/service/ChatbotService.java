@@ -500,7 +500,7 @@ public class ChatbotService {
                 return response;
             }
         } else {
-            // If no category provided, use the standard method
+            // If no category provided, use the Regular method
             return processEventRecommendations(request);
         }
     }

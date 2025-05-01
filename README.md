@@ -74,7 +74,7 @@ The mock data includes tickets for several sample events:
   - 5 Regular tickets (Section B, Seats B1-B5) at ฿2,500 each
   - 5 Economy tickets (Section C, Seats C1-C5) at ฿1,500 each
 - **BNK48 Handshake Event** (event ID: `2`)
-  - 5 Standard tickets (Main section, Seats M1-M5) at ฿1,500 each
+  - 5 Regular tickets (Main section, Seats M1-M5) at ฿1,500 each
 - **Slot Machine Live in Bangkok** (event ID: `3`)
   - 3 VIP tickets (Section A, Seats A1-A3) at ฿3,500 each
   - 3 Regular tickets (Section B, Seats B1-B3) at ฿2,000 each
@@ -84,7 +84,7 @@ The mock data includes tickets for several sample events:
   - 2 Standing tickets (Section C, Seats C1-C2) at ฿1,800 each
 
 #### Bookings and Payments
-- Sample booking for the regular user with 2 VIP tickets for the BNK48 Concert
+- Sample booking for the Regular user with 2 VIP tickets for the BNK48 Concert
 - Payment record for the booking (฿10,000, status: COMPLETED)
 
 #### Chat History

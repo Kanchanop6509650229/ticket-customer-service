@@ -12,7 +12,7 @@ INSERT INTO users (username, password, name, email, phone) VALUES
 INSERT INTO users (username, password, name, email, phone) VALUES
 ('organizer', '$2a$10$b0MjPqQYqGY7QRK5Qc.1NuHPnq3W4JpMnKXYjT.k1t0lDjqaBgdT.', 'Organizer User', 'organizer@eventticket.com', '0823456789');
 
--- Insert regular user (password: user123)
+-- Insert Regular user (password: user123)
 INSERT INTO users (username, password, name, email, phone) VALUES
 ('user', '$2a$10$b0MjPqQYqGY7QRK5Qc.1NuHPnq3W4JpMnKXYjT.k1t0lDjqaBgdT.', 'Regular User', 'user@eventticket.com', '0834567890');
 
@@ -49,11 +49,11 @@ INSERT INTO tickets (event_id, type, price, section, seat_number, status) VALUES
 
 -- Insert sample event tickets for BNK48 Handshake Event (Event ID 2)
 INSERT INTO tickets (event_id, type, price, section, seat_number, status) VALUES
-('2', 'Standard', 1500.00, 'Main', 'M1', 'AVAILABLE'),
-('2', 'Standard', 1500.00, 'Main', 'M2', 'AVAILABLE'),
-('2', 'Standard', 1500.00, 'Main', 'M3', 'AVAILABLE'),
-('2', 'Standard', 1500.00, 'Main', 'M4', 'AVAILABLE'),
-('2', 'Standard', 1500.00, 'Main', 'M5', 'AVAILABLE');
+('2', 'Regular', 1500.00, 'Main', 'M1', 'AVAILABLE'),
+('2', 'Regular', 1500.00, 'Main', 'M2', 'AVAILABLE'),
+('2', 'Regular', 1500.00, 'Main', 'M3', 'AVAILABLE'),
+('2', 'Regular', 1500.00, 'Main', 'M4', 'AVAILABLE'),
+('2', 'Regular', 1500.00, 'Main', 'M5', 'AVAILABLE');
 
 -- Insert sample event tickets for Slot Machine Live (Event ID 3)
 INSERT INTO tickets (event_id, type, price, section, seat_number, status) VALUES
