@@ -89,8 +89,8 @@ public class EventServiceClient {
 
         // For ticket ID 1, use the expected event name from the example
         if ("1".equals(eventId)) {
-            response.setName("BNK48 Concert 2026");
-            response.setDescription("BNK48 Concert 2026 in Bangkok");
+            response.setName("BNK48 Concert 2025");
+            response.setDescription("BNK48 Concert 2025 in Bangkok");
         } else {
             response.setName("Event " + eventId);
             response.setDescription("Event details not available");

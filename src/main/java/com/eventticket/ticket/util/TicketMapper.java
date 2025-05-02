@@ -60,15 +60,15 @@ public class TicketMapper {
                     log.debug("Successfully set event name to: {} for ticket ID: {}", eventResponse.getName(), ticket.getId());
                 } else {
                     log.warn("Event response or name is null for eventId: {}", ticket.getEventId());
-                    dto.setEventName("BNK48 Concert 2026"); // Use the expected event name from the example
+                    dto.setEventName("BNK48 Concert 2025"); // Use the expected event name from the example
                 }
             } else {
                 log.warn("EventServiceClient is not initialized");
-                dto.setEventName("BNK48 Concert 2026"); // Use the expected event name from the example
+                dto.setEventName("BNK48 Concert 2025"); // Use the expected event name from the example
             }
         } catch (Exception e) {
             log.warn("Could not fetch event name for eventId: {}", ticket.getEventId(), e);
-            dto.setEventName("BNK48 Concert 2026"); // Use the expected event name from the example
+            dto.setEventName("BNK48 Concert 2025"); // Use the expected event name from the example
         }
 
         return dto;

@@ -166,9 +166,9 @@ public class ChatbotService {
             }
         }
 
-        // If no direct match, use LLM
+        // If no direct match, use LLM with FAQ prompt
         if (matchedAnswer == null) {
-            return processBookingHelp(request);
+            return processFaqWithLLM(request);
         }
 
         // Build response
@@ -194,6 +194,168 @@ public class ChatbotService {
         saveChatHistory(request, response);
 
         return response;
+    }
+
+    /**
+     * Process FAQ queries using LLM when no predefined FAQ match is found
+     * This method uses a specialized prompt focused on FAQ-style responses
+     * Can include specific event details if eventId is provided
+     */
+    private ChatbotResponse processFaqWithLLM(ChatbotRequest request) {
+        // Fetch event details if available
+        EventResponse eventDetails = null;
+        if (request.getEventId() != null && !request.getEventId().isEmpty()) {
+            try {
+                eventDetails = eventServiceClient.getEventDetails(request.getEventId());
+            } catch (Exception e) {
+                System.err.println("Could not fetch event details for eventId: " + request.getEventId() + ", error: " + e.getMessage());
+            }
+        }
+
+        // Build prompt specifically for FAQ-style responses
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("You are a helpful FAQ assistant for an event/concert ticketing platform. ");
+        prompt.append("Provide a clear, concise answer to the user's question in a FAQ style. ");
+        prompt.append("Focus on being informative and direct, as if answering a frequently asked question. ");
+        prompt.append("Include specific details where possible, such as policies, timeframes, or requirements. ");
+        prompt.append("Keep your answer under 3-4 sentences for clarity. ");
+
+        // Add event-specific context if available
+        if (eventDetails != null) {
+            prompt.append("\n\nContext: The user is asking about the event '")
+                  .append(eventDetails.getName())
+                  .append("' which is a ")
+                  .append(eventDetails.getCategory())
+                  .append(" happening on ")
+                  .append(eventDetails.getDate())
+                  .append(" at ")
+                  .append(eventDetails.getVenue())
+                  .append(".");
+
+            // Add more detailed event information if available
+            if (eventDetails.getDescription() != null && !eventDetails.getDescription().isEmpty()) {
+                prompt.append(" Event description: ").append(eventDetails.getDescription());
+            }
+
+            if (eventDetails.getArtists() != null && !eventDetails.getArtists().isEmpty()) {
+                prompt.append(" Featured artists: ").append(String.join(", ", eventDetails.getArtists()));
+            }
+
+            if (eventDetails.getTime() != null) {
+                prompt.append(" Start time: ").append(eventDetails.getTime());
+            }
+        }
+
+        // Add common FAQ knowledge context
+        prompt.append("\n\nCommon ticket booking policies: ");
+        prompt.append("\n- Refunds available for cancellations 7+ days before event (80% refund)");
+        prompt.append("\n- Group discounts (10+ people) available through dedicated sales channels");
+        prompt.append("\n- Entry requires QR code and matching ID");
+        prompt.append("\n- Large groups should book 2+ weeks in advance");
+        prompt.append("\n- Tickets can be transferred to others up to 24 hours before the event");
+        prompt.append("\n- Most venues have accessibility options available");
+
+        prompt.append("\n\nUser question: ").append(request.getQuery());
+
+        // Get response from LLM with FAQ-specific prompt
+        ChatbotResponse response = callDeepSeekForFaq(prompt.toString(), request);
+
+        // Save chat history
+        saveChatHistory(request, response);
+
+        return response;
+    }
+
+    /**
+     * Call DeepSeek API specifically for FAQ responses
+     * Uses a slightly different configuration than general booking help
+     */
+    private ChatbotResponse callDeepSeekForFaq(String prompt, ChatbotRequest request) {
+        try {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", modelName);
+
+            List<Map<String, String>> messages = new ArrayList<>();
+            messages.add(Map.of("role", "system", "content",
+                    "You are an FAQ specialist providing clear, concise answers to common questions about event ticketing."));
+            messages.add(Map.of("role", "user", "content", prompt));
+            requestBody.put("messages", messages);
+
+            // Lower temperature for more consistent, factual responses
+            requestBody.put("temperature", 0.5);
+            requestBody.put("max_tokens", 250);
+
+            String jsonResponse = deepSeekWebClient.post()
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            JsonNode responseJson = objectMapper.readTree(jsonResponse);
+            String content = responseJson.path("choices").path(0).path("message").path("content").asText();
+
+            ChatbotResponse response = new ChatbotResponse();
+            response.setAnswer(content);
+            response.setConfidence(0.9); // Higher confidence for FAQ responses
+
+            // FAQ-specific related questions
+            List<ChatbotResponse.FAQ> relatedFaqs = new ArrayList<>();
+
+            ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+            faq1.setQuestion("What is the refund policy");
+            faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq1);
+
+            ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+            faq2.setQuestion("How do I transfer my tickets to someone else");
+            faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq2);
+
+            ChatbotResponse.FAQ faq3 = new ChatbotResponse.FAQ();
+            faq3.setQuestion("What documents are required for entry");
+            faq3.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            relatedFaqs.add(faq3);
+
+            // Randomly select 2 FAQs to show
+            Collections.shuffle(relatedFaqs);
+            relatedFaqs = relatedFaqs.subList(0, Math.min(2, relatedFaqs.size()));
+
+            response.setRelatedFaq(relatedFaqs);
+
+            return response;
+        } catch (Exception e) {
+            System.err.println("Error calling DeepSeek API for FAQ: " + e.getMessage());
+
+            // Fallback response
+            ChatbotResponse response = new ChatbotResponse();
+
+            // Create a more helpful fallback response
+            String fallbackAnswer = "I'm sorry, but I'm having trouble retrieving the answer to your question at the moment. " +
+                    "This could be due to network issues or high demand. " +
+                    "In the meantime, you can:\n\n" +
+                    "• Check our FAQ section on the website\n" +
+                    "• Contact customer service at support@eventticket.com\n" +
+                    "• Try again in a few minutes";
+
+            response.setAnswer(fallbackAnswer);
+            response.setConfidence(0.5);
+
+            // Add some helpful FAQs
+            List<ChatbotResponse.FAQ> fallbackFaqs = new ArrayList<>();
+            ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+            faq1.setQuestion("View frequently asked questions");
+            faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq1);
+
+            ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+            faq2.setQuestion("Contact customer support");
+            faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq2);
+
+            response.setRelatedFaq(fallbackFaqs);
+
+            return response;
+        }
     }
 
     private ChatbotResponse callDeepSeek(String prompt, ChatbotRequest request) {
