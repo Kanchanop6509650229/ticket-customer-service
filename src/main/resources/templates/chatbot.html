@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: html(title='Chatbot Support', 
-                                  content=~{::content}, 
-                                  additionalCss=~{::additionalCss}, 
+      th:replace="~{layout :: html(title='Chatbot Support',
+                                  content=~{::content},
+                                  additionalCss=~{::additionalCss},
                                   additionalJs=~{::additionalJs})}">
 <head>
     <additionalCss>
@@ -88,7 +88,7 @@
                 <p class="lead">Get help with your tickets, bookings, and event information</p>
             </div>
         </section>
-        
+
         <!-- Chatbot Interface -->
         <section class="py-4">
             <div class="container">
@@ -103,10 +103,10 @@
                                     </div>
                                     <div class="message-time">Just now</div>
                                 </div>
-                                
+
                                 <!-- Messages will be added here dynamically -->
                             </div>
-                            
+
                             <div class="chat-input">
                                 <form id="chat-form" class="d-flex">
                                     <input type="text" class="form-control me-2" id="chat-input" placeholder="Type your message here...">
@@ -117,7 +117,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-lg-4">
                         <div class="card mb-4">
                             <div class="card-header bg-primary text-white">
@@ -146,7 +146,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="card">
                             <div class="card-header bg-secondary text-white">
                                 <h4 class="mb-0">Chat Options</h4>
@@ -161,7 +161,7 @@
                                         <option value="event-recommendations">Event Recommendations</option>
                                     </select>
                                 </div>
-                                
+
                                 <div class="mb-3" id="event-selection" style="display: none;">
                                     <label for="event-id" class="form-label">Select Event</label>
                                     <select class="form-select" id="event-id">
@@ -170,7 +170,7 @@
                                         <option value="3">Tomorrowland Music Festival</option>
                                     </select>
                                 </div>
-                                
+
                                 <div class="d-grid">
                                     <button class="btn btn-secondary" id="clear-chat">
                                         <i class="fas fa-trash-alt me-2"></i>Clear Chat
@@ -183,7 +183,7 @@
             </div>
         </section>
     </content>
-    
+
     <additionalJs>
         <!-- Additional JS for this page -->
         <script th:inline="javascript">
@@ -196,7 +196,7 @@
                 const chatMode = $('#chat-mode');
                 const eventSelection = $('#event-selection');
                 const eventId = $('#event-id');
-                
+
                 // Show/hide event selection based on chat mode
                 chatMode.on('change', function() {
                     const mode = $(this).val();
@@ -206,45 +206,45 @@
                         eventSelection.hide();
                     }
                 });
-                
+
                 // Handle suggested questions
                 $('.suggested-question').on('click', function() {
                     const question = $(this).text().trim();
                     chatInput.val(question);
                     chatForm.submit();
                 });
-                
+
                 // Handle chat form submission
                 chatForm.on('submit', function(e) {
                     e.preventDefault();
-                    
+
                     const message = chatInput.val().trim();
                     if (!message) return;
-                    
+
                     // Add user message to chat
                     addMessage(message, 'user');
-                    
+
                     // Clear input
                     chatInput.val('');
-                    
+
                     // Show typing indicator
                     showTypingIndicator();
-                    
+
                     // Get chat mode and event ID
                     const mode = chatMode.val();
                     const selectedEventId = mode === 'event-info' || mode === 'booking-help' ? eventId.val() : null;
-                    
+
                     // Prepare request data
                     const requestData = {
                         query: message,
                         userId: userId,
                         sessionId: sessionId
                     };
-                    
+
                     if (selectedEventId) {
                         requestData.eventId = selectedEventId;
                     }
-                    
+
                     // Determine endpoint based on chat mode
                     let endpoint;
                     switch (mode) {
@@ -260,7 +260,7 @@
                         default:
                             endpoint = '/ticket-service/api/chatbot/faq';
                     }
-                    
+
                     // Send request to chatbot API
                     $.ajax({
                         url: endpoint,
@@ -270,21 +270,21 @@
                         success: function(response) {
                             // Remove typing indicator
                             removeTypingIndicator();
-                            
+
                             // Add bot response to chat
-                            addMessage(response.response, 'bot');
+                            addMessage(response.answer, 'bot');
                         },
                         error: function(xhr, status, error) {
                             // Remove typing indicator
                             removeTypingIndicator();
-                            
+
                             // Add error message to chat
                             addMessage('Sorry, I encountered an error. Please try again later.', 'bot');
                             console.error('Chatbot error:', error);
                         }
                     });
                 });
-                
+
                 // Handle clear chat button
                 $('#clear-chat').on('click', function() {
                     // Clear all messages except the welcome message
@@ -297,7 +297,7 @@
                         </div>
                     `);
                 });
-                
+
                 // Function to add a message to the chat
                 function addMessage(message, sender) {
                     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -309,13 +309,13 @@
                             <div class="message-time">${time}</div>
                         </div>
                     `;
-                    
+
                     chatMessages.append(messageHtml);
-                    
+
                     // Scroll to bottom
                     chatMessages.scrollTop(chatMessages[0].scrollHeight);
                 }
-                
+
                 // Function to show typing indicator
                 function showTypingIndicator() {
                     const typingHtml = `
@@ -329,13 +329,13 @@
                             </div>
                         </div>
                     `;
-                    
+
                     chatMessages.append(typingHtml);
-                    
+
                     // Scroll to bottom
                     chatMessages.scrollTop(chatMessages[0].scrollHeight);
                 }
-                
+
                 // Function to remove typing indicator
                 function removeTypingIndicator() {
                     $('#typing-indicator').remove();
