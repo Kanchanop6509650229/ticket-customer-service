@@ -63,6 +63,7 @@
                                   th:classappend="${
                                     booking.status == 'PAID' ? 'bg-success' :
                                     booking.status == 'CONFIRMED' ? 'bg-primary' :
+                                    booking.status == 'RESERVED' ? 'bg-info' :
                                     booking.status == 'PENDING' ? 'bg-warning' :
                                     booking.status == 'CANCELLED' ? 'bg-danger' : 'bg-secondary'
                                   }"
@@ -76,6 +77,15 @@
 
                         <!-- Show different buttons based on booking status -->
                         <div th:if="${booking.status == 'PENDING'}">
+                            <button class="btn btn-primary" id="confirm-booking-btn">
+                                <i class="fas fa-check me-2"></i>Confirm Booking
+                            </button>
+                            <button class="btn btn-danger" id="cancel-booking-btn">
+                                <i class="fas fa-times me-2"></i>Cancel Booking
+                            </button>
+                        </div>
+
+                        <div th:if="${booking.status == 'RESERVED'}">
                             <button class="btn btn-primary" id="confirm-booking-btn">
                                 <i class="fas fa-check me-2"></i>Confirm Booking
                             </button>
