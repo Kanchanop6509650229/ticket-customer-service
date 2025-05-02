@@ -199,19 +199,8 @@ public class ChatbotService {
     /**
      * Process FAQ queries using LLM when no predefined FAQ match is found
      * This method uses a specialized prompt focused on FAQ-style responses
-     * Can include specific event details if eventId is provided
      */
     private ChatbotResponse processFaqWithLLM(ChatbotRequest request) {
-        // Fetch event details if available
-        EventResponse eventDetails = null;
-        if (request.getEventId() != null && !request.getEventId().isEmpty()) {
-            try {
-                eventDetails = eventServiceClient.getEventDetails(request.getEventId());
-            } catch (Exception e) {
-                System.err.println("Could not fetch event details for eventId: " + request.getEventId() + ", error: " + e.getMessage());
-            }
-        }
-
         // Build prompt specifically for FAQ-style responses
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a helpful FAQ assistant for an event/concert ticketing platform. ");
@@ -219,32 +208,6 @@ public class ChatbotService {
         prompt.append("Focus on being informative and direct, as if answering a frequently asked question. ");
         prompt.append("Include specific details where possible, such as policies, timeframes, or requirements. ");
         prompt.append("Keep your answer under 3-4 sentences for clarity. ");
-
-        // Add event-specific context if available
-        if (eventDetails != null) {
-            prompt.append("\n\nContext: The user is asking about the event '")
-                  .append(eventDetails.getName())
-                  .append("' which is a ")
-                  .append(eventDetails.getCategory())
-                  .append(" happening on ")
-                  .append(eventDetails.getDate())
-                  .append(" at ")
-                  .append(eventDetails.getVenue())
-                  .append(".");
-
-            // Add more detailed event information if available
-            if (eventDetails.getDescription() != null && !eventDetails.getDescription().isEmpty()) {
-                prompt.append(" Event description: ").append(eventDetails.getDescription());
-            }
-
-            if (eventDetails.getArtists() != null && !eventDetails.getArtists().isEmpty()) {
-                prompt.append(" Featured artists: ").append(String.join(", ", eventDetails.getArtists()));
-            }
-
-            if (eventDetails.getTime() != null) {
-                prompt.append(" Start time: ").append(eventDetails.getTime());
-            }
-        }
 
         // Add common FAQ knowledge context
         prompt.append("\n\nCommon ticket booking policies: ");
