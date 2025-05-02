@@ -42,6 +42,22 @@
                 padding: 0.75rem;
                 border-radius: 1rem;
             }
+            .message-content p {
+                margin-bottom: 0.5rem;
+            }
+            .message-content h3, .message-content h4 {
+                margin-top: 0.75rem;
+                margin-bottom: 0.5rem;
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+            .message-content ul, .message-content ol {
+                padding-left: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .message-content strong, .message-content b {
+                font-weight: 600;
+            }
             .message-time {
                 font-size: 0.75rem;
                 color: #6c757d;
@@ -99,7 +115,7 @@
                                 <!-- Welcome message -->
                                 <div class="message message-bot">
                                     <div class="message-content">
-                                        <p class="mb-0">👋 Hello! I'm your Event Ticket Assistant. How can I help you today?</p>
+                                        <p>👋 Hello! I'm your Event Ticket Assistant. How can I help you today?</p>
                                     </div>
                                     <div class="message-time">Just now</div>
                                 </div>
@@ -291,7 +307,7 @@
                     chatMessages.html(`
                         <div class="message message-bot">
                             <div class="message-content">
-                                <p class="mb-0">👋 Hello! I'm your Event Ticket Assistant. How can I help you today?</p>
+                                <p>👋 Hello! I'm your Event Ticket Assistant. How can I help you today?</p>
                             </div>
                             <div class="message-time">Just now</div>
                         </div>
@@ -301,10 +317,22 @@
                 // Function to add a message to the chat
                 function addMessage(message, sender) {
                     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    // For user messages, display as plain text
+                    // For bot messages, allow HTML formatting
+                    let messageContent;
+                    if (sender === 'user') {
+                        messageContent = `<p class="mb-0">${message}</p>`;
+                    } else {
+                        // For bot messages, we'll allow HTML content
+                        // Convert markdown-style formatting to HTML if needed
+                        messageContent = formatBotMessage(message);
+                    }
+
                     const messageHtml = `
                         <div class="message message-${sender}">
                             <div class="message-content">
-                                <p class="mb-0">${message}</p>
+                                ${messageContent}
                             </div>
                             <div class="message-time">${time}</div>
                         </div>
@@ -314,6 +342,100 @@
 
                     // Scroll to bottom
                     chatMessages.scrollTop(chatMessages[0].scrollHeight);
+                }
+
+                // Function to format bot messages with proper HTML
+                function formatBotMessage(message) {
+                    // If the message already contains HTML tags, return it as is
+                    if (message.includes('<h3>') || message.includes('<p>') ||
+                        message.includes('<ul>') || message.includes('<strong>')) {
+                        return message;
+                    }
+
+                    // Otherwise, apply basic formatting
+                    let formattedMessage = message;
+
+                    // Process the message in sections to handle lists properly
+                    const sections = formattedMessage.split(/(?=###)/);
+
+                    // Process each section
+                    formattedMessage = sections.map(section => {
+                        // Convert markdown-style headers (### Header) to HTML
+                        section = section.replace(/###\s+(.*?)(?:\n|$)/g, '<h3>$1</h3>');
+
+                        // Convert markdown-style bold (**text**) to HTML
+                        section = section.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+                        // Handle bullet lists (lines starting with - or *)
+                        if (section.match(/(?:^|\n)[-*]\s+/)) {
+                            const listItems = section.split(/\n/).filter(line => line.match(/^[-*]\s+/));
+                            if (listItems.length > 0) {
+                                const listHtml = '<ul>' +
+                                    listItems.map(item => `<li>${item.replace(/^[-*]\s+/, '')}</li>`).join('') +
+                                    '</ul>';
+
+                                // Replace the list items in the original text
+                                listItems.forEach(item => {
+                                    section = section.replace(item, '');
+                                });
+
+                                // Add the HTML list back
+                                section = section.trim() + listHtml;
+                            }
+                        }
+
+                        return section;
+                    }).join('');
+
+                    // Convert line breaks to paragraphs, but preserve HTML tags
+                    const paragraphs = [];
+                    let currentParagraph = '';
+
+                    formattedMessage.split('\n').forEach(line => {
+                        // Skip empty lines
+                        if (line.trim() === '') {
+                            if (currentParagraph !== '') {
+                                paragraphs.push(currentParagraph);
+                                currentParagraph = '';
+                            }
+                        } else if (line.includes('<h3>') || line.includes('<ul>') || line.includes('</ul>')) {
+                            // If the line contains HTML headers or lists, add it as is
+                            if (currentParagraph !== '') {
+                                paragraphs.push(currentParagraph);
+                                currentParagraph = '';
+                            }
+                            paragraphs.push(line);
+                        } else {
+                            // Otherwise, add to the current paragraph
+                            if (currentParagraph === '') {
+                                currentParagraph = line;
+                            } else {
+                                currentParagraph += ' ' + line;
+                            }
+                        }
+                    });
+
+                    // Add the last paragraph if it exists
+                    if (currentParagraph !== '') {
+                        paragraphs.push(currentParagraph);
+                    }
+
+                    // Convert paragraphs to HTML
+                    formattedMessage = paragraphs.map(para => {
+                        if (para.includes('<h3>') || para.includes('<ul>') || para.includes('</ul>')) {
+                            return para;
+                        } else {
+                            return `<p>${para}</p>`;
+                        }
+                    }).join('');
+
+                    // If no content was created, wrap in a single paragraph
+                    if (!formattedMessage.includes('<p>') && !formattedMessage.includes('<h3>') &&
+                        !formattedMessage.includes('<ul>')) {
+                        formattedMessage = `<p>${formattedMessage}</p>`;
+                    }
+
+                    return formattedMessage;
                 }
 
                 // Function to show typing indicator
