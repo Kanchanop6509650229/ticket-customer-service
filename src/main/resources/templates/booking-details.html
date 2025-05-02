@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: html(title='Booking Details', 
-                                  content=~{::content}, 
-                                  additionalCss=~{::additionalCss}, 
+      th:replace="~{layout :: html(title='Booking Details',
+                                  content=~{::content},
+                                  additionalCss=~{::additionalCss},
                                   additionalJs=~{::additionalJs})}">
 <head>
     <additionalCss>
@@ -53,7 +53,7 @@
                         <li class="breadcrumb-item active" aria-current="page">Booking Details</li>
                     </ol>
                 </nav>
-                
+
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h1>Booking Details</h1>
@@ -61,9 +61,9 @@
                             Booking ID: <span th:text="${booking.bookingId}">123</span>
                             <span class="badge rounded-pill status-badge ms-2"
                                   th:classappend="${
-                                    booking.status == 'PAID' ? 'bg-success' : 
-                                    booking.status == 'CONFIRMED' ? 'bg-primary' : 
-                                    booking.status == 'PENDING' ? 'bg-warning' : 
+                                    booking.status == 'PAID' ? 'bg-success' :
+                                    booking.status == 'CONFIRMED' ? 'bg-primary' :
+                                    booking.status == 'PENDING' ? 'bg-warning' :
                                     booking.status == 'CANCELLED' ? 'bg-danger' : 'bg-secondary'
                                   }"
                                   th:text="${booking.status}">Status</span>
@@ -73,7 +73,7 @@
                         <button class="btn btn-outline-primary" onclick="window.print()">
                             <i class="fas fa-print me-2"></i>Print
                         </button>
-                        
+
                         <!-- Show different buttons based on booking status -->
                         <div th:if="${booking.status == 'PENDING'}">
                             <button class="btn btn-primary" id="confirm-booking-btn">
@@ -83,7 +83,7 @@
                                 <i class="fas fa-times me-2"></i>Cancel Booking
                             </button>
                         </div>
-                        
+
                         <div th:if="${booking.status == 'CONFIRMED'}">
                             <button class="btn btn-success" id="pay-booking-btn">
                                 <i class="fas fa-credit-card me-2"></i>Pay Now
@@ -96,7 +96,7 @@
                 </div>
             </div>
         </section>
-        
+
         <!-- Print Header (only visible when printing) -->
         <section class="py-4 print-only">
             <div class="container">
@@ -108,7 +108,7 @@
                 </div>
             </div>
         </section>
-        
+
         <!-- Booking Details -->
         <section class="py-4">
             <div class="container">
@@ -125,7 +125,7 @@
                                     <i class="fas fa-clock me-2"></i><span th:text="${event.time}">Time</span><br>
                                     <i class="fas fa-map-marker-alt me-2"></i><span th:text="${event.venue}">Venue</span>
                                 </p>
-                                
+
                                 <div class="no-print">
                                     <a th:href="@{/web/events/{id}(id=${event.id})}" class="btn btn-outline-primary">
                                         <i class="fas fa-info-circle me-2"></i>View Event Details
@@ -133,7 +133,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-4">
                             <div class="card-header bg-primary text-white">
                                 <h4 class="mb-0">Tickets</h4>
@@ -145,17 +145,20 @@
                                             <div class="card-body">
                                                 <h5 class="card-title" th:text="${ticket.type}">VIP</h5>
                                                 <p class="card-text">
-                                                    <span th:if="${ticket.section}">
+                                                    <span th:if="${ticket.section != null and ticket.section != '' and ticket.seatNumber != null and ticket.seatNumber != ''}">
                                                         Section: <span th:text="${ticket.section}">A</span><br>
                                                         Seat: <span th:text="${ticket.seatNumber}">A1</span><br>
                                                     </span>
                                                     Price: <span th:text="${'฿' + ticket.price}">฿5,000</span><br>
                                                     Status: <span th:text="${ticket.status}">SOLD</span>
                                                 </p>
-                                                
-                                                <div th:if="${ticket.qrCode}" class="text-center mt-3">
+
+                                                <div th:if="${ticket.qrCode != null and ticket.qrCode != ''}" class="text-center mt-3">
                                                     <img th:src="${ticket.qrCode}" alt="QR Code" class="img-fluid qr-code">
                                                     <p class="small text-muted mt-2">Scan this QR code at the venue entrance</p>
+                                                </div>
+                                                <div th:if="${ticket.qrCode == null or ticket.qrCode == ''}" class="text-center mt-3">
+                                                    <p class="small text-muted">QR code will be available after payment</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -164,7 +167,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-lg-4">
                         <div class="card mb-4">
                             <div class="card-header bg-primary text-white">
@@ -183,24 +186,24 @@
                                     <span>Status:</span>
                                     <span th:text="${booking.status}">PAID</span>
                                 </div>
-                                
+
                                 <hr>
-                                
+
                                 <h5>Ticket Summary</h5>
                                 <div th:each="ticket : ${booking.tickets}" class="d-flex justify-content-between mb-2">
-                                    <span th:text="${ticket.type + (ticket.section ? ' (' + ticket.section + '-' + ticket.seatNumber + ')' : '')}">VIP (A-A1)</span>
+                                    <span th:text="${ticket.type + ((ticket.section != null and ticket.section != '' and ticket.seatNumber != null and ticket.seatNumber != '') ? ' (' + ticket.section + '-' + ticket.seatNumber + ')' : '')}">VIP (A-A1)</span>
                                     <span th:text="${'฿' + ticket.price}">฿5,000</span>
                                 </div>
-                                
+
                                 <hr>
-                                
+
                                 <div class="d-flex justify-content-between mb-2 fw-bold">
                                     <span>Total Amount:</span>
                                     <span th:text="${'฿' + booking.totalAmount}">฿10,000</span>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-4 no-print">
                             <div class="card-header bg-primary text-white">
                                 <h4 class="mb-0">Need Help?</h4>
@@ -218,7 +221,7 @@
                 </div>
             </div>
         </section>
-        
+
         <!-- Payment Modal -->
         <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -239,7 +242,7 @@
                                     <option value="E_WALLET">E-Wallet</option>
                                 </select>
                             </div>
-                            
+
                             <div id="credit-card-fields" class="d-none">
                                 <div class="mb-3">
                                     <label for="card-number" class="form-label">Card Number</label>
@@ -260,7 +263,7 @@
                                     <input type="text" class="form-control" id="card-holder" placeholder="John Doe">
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="amount" class="form-label">Amount</label>
                                 <input type="text" class="form-control" id="amount" th:value="${'฿' + booking.totalAmount}" readonly>
@@ -275,13 +278,13 @@
             </div>
         </div>
     </content>
-    
+
     <additionalJs>
         <!-- Additional JS for this page -->
         <script th:inline="javascript">
             $(document).ready(function() {
                 const bookingId = [[${booking.bookingId}]];
-                
+
                 // Confirm booking button
                 $('#confirm-booking-btn').on('click', function() {
                     $.ajax({
@@ -295,7 +298,7 @@
                         }
                     });
                 });
-                
+
                 // Cancel booking button
                 $('#cancel-booking-btn').on('click', function() {
                     if (confirm('Are you sure you want to cancel this booking?')) {
@@ -311,12 +314,12 @@
                         });
                     }
                 });
-                
+
                 // Pay booking button
                 $('#pay-booking-btn').on('click', function() {
                     $('#paymentModal').modal('show');
                 });
-                
+
                 // Payment method change
                 $('#payment-method').on('change', function() {
                     if ($(this).val() === 'CREDIT_CARD') {
@@ -325,24 +328,24 @@
                         $('#credit-card-fields').addClass('d-none');
                     }
                 });
-                
+
                 // Process payment button
                 $('#process-payment-btn').on('click', function() {
                     const paymentMethod = $('#payment-method').val();
-                    
+
                     if (!paymentMethod) {
                         alert('Please select a payment method');
                         return;
                     }
-                    
+
                     // Prepare payment data
                     const paymentData = {
                         method: paymentMethod,
-                        details: paymentMethod === 'CREDIT_CARD' ? 
-                            $('#card-number').val() + ' (Exp: ' + $('#expiry-date').val() + ')' : 
+                        details: paymentMethod === 'CREDIT_CARD' ?
+                            $('#card-number').val() + ' (Exp: ' + $('#expiry-date').val() + ')' :
                             'Payment via ' + paymentMethod
                     };
-                    
+
                     // Send payment request
                     $.ajax({
                         url: '/ticket-service/api/bookings/' + bookingId + '/payment',
