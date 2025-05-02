@@ -179,8 +179,9 @@
                                 </div>
 
                                 <div class="mb-3" id="event-selection" style="display: none;">
-                                    <label for="event-id" class="form-label">Select Event</label>
+                                    <label for="event-id" class="form-label">Select Event <span id="event-optional" style="display: none;">(Optional)</span></label>
                                     <select class="form-select" id="event-id">
+                                        <option value="">-- No specific event --</option>
                                         <option value="1">BNK48 Concert</option>
                                         <option value="2">BNK48 Handshake with BNK48</option>
                                         <option value="3">Slot Machine Live with Slot Machine</option>
@@ -213,11 +214,29 @@
                 const eventSelection = $('#event-selection');
                 const eventId = $('#event-id');
 
+                // Initialize event selection visibility based on initial chat mode
+                const initialMode = chatMode.val();
+                if (initialMode === 'event-info' || initialMode === 'booking-help' || initialMode === 'faq') {
+                    eventSelection.show();
+
+                    // Show "Optional" text for FAQ mode
+                    if (initialMode === 'faq') {
+                        $('#event-optional').show();
+                    }
+                }
+
                 // Show/hide event selection based on chat mode
                 chatMode.on('change', function() {
                     const mode = $(this).val();
-                    if (mode === 'event-info' || mode === 'booking-help') {
+                    if (mode === 'event-info' || mode === 'booking-help' || mode === 'faq') {
                         eventSelection.show();
+
+                        // Show "Optional" text for FAQ mode, hide for others
+                        if (mode === 'faq') {
+                            $('#event-optional').show();
+                        } else {
+                            $('#event-optional').hide();
+                        }
                     } else {
                         eventSelection.hide();
                     }
@@ -248,7 +267,7 @@
 
                     // Get chat mode and event ID
                     const mode = chatMode.val();
-                    const selectedEventId = mode === 'event-info' || mode === 'booking-help' ? eventId.val() : null;
+                    const selectedEventId = mode === 'event-info' || mode === 'booking-help' || mode === 'faq' ? eventId.val() : null;
 
                     // Prepare request data
                     const requestData = {
