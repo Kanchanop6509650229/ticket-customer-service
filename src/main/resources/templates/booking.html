@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='Book Tickets - ' + ${event.name}, 
+                                  content=~{::content}, 
+                                  additionalCss=~{::additionalCss}, 
+                                  additionalJs=~{::additionalJs})}">
+<head>
+    <additionalCss>
+        <!-- Additional CSS for this page -->
+        <style>
+            .ticket-type-card {
+                transition: all 0.3s;
+                cursor: pointer;
+            }
+            .ticket-type-card:hover {
+                transform: translateY(-5px);
+            }
+            .ticket-type-card.selected {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            }
+            .booking-summary {
+                position: sticky;
+                top: 20px;
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <!-- Booking Header -->
+        <section class="py-4">
+            <div class="container">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/web}">Home</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/web/events/{id}(id=${event.id})}" th:text="${event.name}">Event Name</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Book Tickets</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="mb-4">Book Tickets for <span th:text="${event.name}">Event Name</span></h1>
+                <p class="lead">
+                    <i class="fas fa-map-marker-alt me-2"></i><span th:text="${event.venue}">Venue</span> |
+                    <i class="fas fa-calendar-alt me-2"></i><span th:text="${#temporals.format(event.date, 'dd MMM yyyy')}">Date</span> |
+                    <i class="fas fa-clock me-2"></i><span th:text="${event.time}">Time</span>
+                </p>
+            </div>
+        </section>
+        
+        <!-- Booking Form -->
+        <section class="py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Select Ticket Type</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+                                    <div class="col" th:each="ticketType, status : ${event.ticketTypes}">
+                                        <div class="card h-100 ticket-type-card" th:id="'ticket-type-' + ${status.index}"
+                                             th:data-ticket-type="${ticketType.name}"
+                                             th:data-ticket-price="${ticketType.price}"
+                                             th:classappend="${!availability.availabilityByType.containsKey(ticketType.name) ? 'opacity-50' : ''}">
+                                            <div class="card-body">
+                                                <h5 class="card-title" th:text="${ticketType.name}">VIP</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted" th:text="${'฿' + ticketType.price}">฿5,000</h6>
+                                                <p class="card-text" th:text="${ticketType.description}">Description</p>
+                                                <p class="card-text">
+                                                    <small class="text-muted">
+                                                        <span th:if="${availability.availabilityByType.containsKey(ticketType.name)}">
+                                                            <span th:text="${availability.availabilityByType.get(ticketType.name)}">10</span> tickets available
+                                                        </span>
+                                                        <span th:unless="${availability.availabilityByType.containsKey(ticketType.name)}">
+                                                            Sold out
+                                                        </span>
+                                                    </small>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="quantity-section" class="mb-4 d-none">
+                                    <h5>Select Quantity</h5>
+                                    <div class="input-group mb-3" style="max-width: 200px;">
+                                        <button class="btn btn-outline-secondary" type="button" id="decrease-quantity">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="form-control text-center" id="ticket-quantity" value="1" min="1" max="10">
+                                        <button class="btn btn-outline-secondary" type="button" id="increase-quantity">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Maximum 10 tickets per booking</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Customer Information</h4>
+                            </div>
+                            <div class="card-body">
+                                <form id="booking-form">
+                                    <input type="hidden" id="event-id" th:value="${event.id}">
+                                    <input type="hidden" id="user-id" th:value="${user.id}">
+                                    <input type="hidden" id="selected-ticket-type" value="">
+                                    <input type="hidden" id="selected-quantity" value="1">
+                                    
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="name" th:value="${user.name}" readonly>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" th:value="${user.email}" readonly>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" id="phone" th:value="${user.phone}" readonly>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="terms-checkbox" required>
+                                        <label class="form-check-label" for="terms-checkbox">
+                                            I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                                        </label>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="card booking-summary">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Booking Summary</h4>
+                            </div>
+                            <div class="card-body">
+                                <h5 th:text="${event.name}">Event Name</h5>
+                                <p>
+                                    <i class="fas fa-calendar-alt me-2"></i><span th:text="${#temporals.format(event.date, 'dd MMM yyyy')}">Date</span><br>
+                                    <i class="fas fa-clock me-2"></i><span th:text="${event.time}">Time</span><br>
+                                    <i class="fas fa-map-marker-alt me-2"></i><span th:text="${event.venue}">Venue</span>
+                                </p>
+                                
+                                <hr>
+                                
+                                <div id="summary-details" class="d-none">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Ticket Type:</span>
+                                        <span id="summary-ticket-type">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Quantity:</span>
+                                        <span id="summary-quantity">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Price per Ticket:</span>
+                                        <span id="summary-price-per-ticket">-</span>
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <div class="d-flex justify-content-between mb-2 fw-bold">
+                                        <span>Total Amount:</span>
+                                        <span id="summary-total-amount">-</span>
+                                    </div>
+                                </div>
+                                
+                                <div id="no-selection-message">
+                                    <p class="text-muted">Please select a ticket type to see the booking summary.</p>
+                                </div>
+                                
+                                <div class="d-grid gap-2 mt-4">
+                                    <button id="proceed-to-payment-btn" class="btn btn-primary" disabled>
+                                        Proceed to Payment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Terms and Conditions Modal -->
+        <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h5>Booking Terms</h5>
+                        <p>By booking tickets through our platform, you agree to the following terms:</p>
+                        <ul>
+                            <li>All ticket sales are final. No refunds will be provided except in case of event cancellation.</li>
+                            <li>Tickets are non-transferable and cannot be resold.</li>
+                            <li>The event organizer reserves the right to refuse entry if tickets are found to be purchased fraudulently.</li>
+                            <li>You must present a valid ID that matches the booking name to enter the event.</li>
+                            <li>Photography and recording at events may be restricted. Please check event-specific rules.</li>
+                        </ul>
+                        
+                        <h5>Payment Terms</h5>
+                        <p>All payments are processed securely through our payment gateway:</p>
+                        <ul>
+                            <li>We accept credit/debit cards, bank transfers, and mobile payments.</li>
+                            <li>Your payment information is encrypted and never stored on our servers.</li>
+                            <li>Payments must be completed within 15 minutes of booking, or your reservation will be cancelled.</li>
+                        </ul>
+                        
+                        <h5>Cancellation Policy</h5>
+                        <p>Our cancellation policy is as follows:</p>
+                        <ul>
+                            <li>Cancellations made more than 7 days before the event: 80% refund</li>
+                            <li>Cancellations made 3-7 days before the event: 50% refund</li>
+                            <li>Cancellations made less than 3 days before the event: No refund</li>
+                            <li>If the event is cancelled by the organizer, a full refund will be provided.</li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="accept-terms-btn">Accept</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </content>
+    
+    <additionalJs>
+        <!-- Additional JS for this page -->
+        <script>
+            $(document).ready(function() {
+                // Variables to store selected ticket information
+                let selectedTicketType = '';
+                let selectedTicketPrice = 0;
+                let quantity = 1;
+                
+                // Handle ticket type selection
+                $('.ticket-type-card').on('click', function() {
+                    // Check if ticket type is available
+                    if ($(this).hasClass('opacity-50')) {
+                        return; // Ticket type is sold out
+                    }
+                    
+                    // Remove selected class from all cards
+                    $('.ticket-type-card').removeClass('selected');
+                    
+                    // Add selected class to clicked card
+                    $(this).addClass('selected');
+                    
+                    // Get ticket information
+                    selectedTicketType = $(this).data('ticket-type');
+                    selectedTicketPrice = parseFloat($(this).data('ticket-price'));
+                    
+                    // Update hidden fields
+                    $('#selected-ticket-type').val(selectedTicketType);
+                    
+                    // Show quantity section
+                    $('#quantity-section').removeClass('d-none');
+                    
+                    // Update summary
+                    updateSummary();
+                });
+                
+                // Handle quantity changes
+                $('#decrease-quantity').on('click', function() {
+                    let currentVal = parseInt($('#ticket-quantity').val());
+                    if (currentVal > 1) {
+                        $('#ticket-quantity').val(currentVal - 1);
+                        quantity = currentVal - 1;
+                        $('#selected-quantity').val(quantity);
+                        updateSummary();
+                    }
+                });
+                
+                $('#increase-quantity').on('click', function() {
+                    let currentVal = parseInt($('#ticket-quantity').val());
+                    if (currentVal < 10) {
+                        $('#ticket-quantity').val(currentVal + 1);
+                        quantity = currentVal + 1;
+                        $('#selected-quantity').val(quantity);
+                        updateSummary();
+                    }
+                });
+                
+                $('#ticket-quantity').on('change', function() {
+                    let currentVal = parseInt($(this).val());
+                    if (currentVal < 1) {
+                        $(this).val(1);
+                        quantity = 1;
+                    } else if (currentVal > 10) {
+                        $(this).val(10);
+                        quantity = 10;
+                    } else {
+                        quantity = currentVal;
+                    }
+                    $('#selected-quantity').val(quantity);
+                    updateSummary();
+                });
+                
+                // Handle terms checkbox
+                $('#terms-checkbox').on('change', function() {
+                    updateProceedButton();
+                });
+                
+                // Accept terms button in modal
+                $('#accept-terms-btn').on('click', function() {
+                    $('#terms-checkbox').prop('checked', true);
+                    updateProceedButton();
+                });
+                
+                // Proceed to payment button
+                $('#proceed-to-payment-btn').on('click', function() {
+                    if ($(this).prop('disabled')) {
+                        return;
+                    }
+                    
+                    // Prepare booking data
+                    const bookingData = {
+                        userId: $('#user-id').val(),
+                        eventId: $('#event-id').val(),
+                        ticketType: selectedTicketType,
+                        quantity: quantity
+                    };
+                    
+                    // Send booking request
+                    $.ajax({
+                        url: '/ticket-service/api/bookings',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(bookingData),
+                        success: function(response) {
+                            // Redirect to booking details page
+                            window.location.href = '/ticket-service/web/bookings/' + response.bookingId;
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Error creating booking: ' + error);
+                        }
+                    });
+                });
+                
+                // Helper function to update summary
+                function updateSummary() {
+                    if (selectedTicketType) {
+                        $('#summary-details').removeClass('d-none');
+                        $('#no-selection-message').addClass('d-none');
+                        
+                        $('#summary-ticket-type').text(selectedTicketType);
+                        $('#summary-quantity').text(quantity);
+                        $('#summary-price-per-ticket').text('฿' + selectedTicketPrice.toFixed(2));
+                        
+                        const totalAmount = selectedTicketPrice * quantity;
+                        $('#summary-total-amount').text('฿' + totalAmount.toFixed(2));
+                        
+                        updateProceedButton();
+                    } else {
+                        $('#summary-details').addClass('d-none');
+                        $('#no-selection-message').removeClass('d-none');
+                        $('#proceed-to-payment-btn').prop('disabled', true);
+                    }
+                }
+                
+                // Helper function to update proceed button
+                function updateProceedButton() {
+                    const termsChecked = $('#terms-checkbox').prop('checked');
+                    $('#proceed-to-payment-btn').prop('disabled', !(selectedTicketType && termsChecked));
+                }
+            });
+        </script>
+    </additionalJs>
+</body>
+</html>

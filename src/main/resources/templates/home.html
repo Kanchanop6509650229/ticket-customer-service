@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='Home - Event Ticket System', 
+                                  content=~{::content}, 
+                                  additionalCss=~{::additionalCss}, 
+                                  additionalJs=~{::additionalJs})}">
+<head>
+    <additionalCss>
+        <!-- Additional CSS for this page -->
+        <style>
+            .event-card {
+                transition: transform 0.3s;
+                height: 100%;
+            }
+            .event-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+            .event-image {
+                height: 200px;
+                object-fit: cover;
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <!-- Hero Section -->
+        <section class="py-5 text-center bg-light rounded">
+            <div class="container">
+                <h1 class="display-4">Find Your Perfect Event</h1>
+                <p class="lead">Browse through our collection of concerts, sports events, and more.</p>
+            </div>
+        </section>
+        
+        <!-- Events Section -->
+        <section class="py-5">
+            <div class="container">
+                <h2 class="mb-4">Upcoming Events</h2>
+                
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    <div class="col" th:each="event : ${events}">
+                        <div class="card event-card h-100">
+                            <img th:src="${event.imageUrl} ?: 'https://via.placeholder.com/300x200?text=Event+Image'" 
+                                 class="card-img-top event-image" alt="Event Image">
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${event.name}">Event Name</h5>
+                                <p class="card-text" th:text="${#strings.abbreviate(event.description, 100)}">Event description...</p>
+                                <p class="card-text">
+                                    <i class="fas fa-map-marker-alt me-2"></i><span th:text="${event.venue}">Venue</span>
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-calendar-alt me-2"></i><span th:text="${#temporals.format(event.date, 'dd MMM yyyy')}">Date</span>
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-clock me-2"></i><span th:text="${event.time}">Time</span>
+                                </p>
+                            </div>
+                            <div class="card-footer bg-white border-top-0">
+                                <div class="d-grid gap-2">
+                                    <a th:href="@{/web/events/{id}(id=${event.id})}" class="btn btn-primary">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Features Section -->
+        <section class="py-5 bg-light rounded">
+            <div class="container">
+                <h2 class="text-center mb-5">Why Choose Us</h2>
+                
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-ticket-alt fa-3x mb-3 text-primary"></i>
+                            <h4>Secure Tickets</h4>
+                            <p>All tickets come with QR codes for easy and secure entry.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-hand-holding-usd fa-3x mb-3 text-primary"></i>
+                            <h4>Easy Refunds</h4>
+                            <p>Hassle-free refund process if you can't make it to the event.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-headset fa-3x mb-3 text-primary"></i>
+                            <h4>24/7 Support</h4>
+                            <p>Our AI-powered chatbot is always available to assist you.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </content>
+    
+    <additionalJs>
+        <!-- Additional JS for this page -->
+        <script>
+            $(document).ready(function() {
+                console.log('Home page loaded');
+            });
+        </script>
+    </additionalJs>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='Booking Details', 
+                                  content=~{::content}, 
+                                  additionalCss=~{::additionalCss}, 
+                                  additionalJs=~{::additionalJs})}">
+<head>
+    <additionalCss>
+        <!-- Additional CSS for this page -->
+        <style>
+            .qr-code {
+                max-width: 200px;
+                margin: 0 auto;
+            }
+            .ticket-card {
+                transition: transform 0.3s;
+            }
+            .ticket-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+            .status-badge {
+                font-size: 0.8rem;
+                padding: 0.25rem 0.5rem;
+            }
+            .booking-actions .btn {
+                margin-right: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+            @media print {
+                .no-print {
+                    display: none !important;
+                }
+                .print-only {
+                    display: block !important;
+                }
+            }
+            .print-only {
+                display: none;
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <!-- Booking Details Header -->
+        <section class="py-4 no-print">
+            <div class="container">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/web}">Home</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/web/user/bookings}">My Bookings</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Booking Details</li>
+                    </ol>
+                </nav>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1>Booking Details</h1>
+                        <p class="lead">
+                            Booking ID: <span th:text="${booking.bookingId}">123</span>
+                            <span class="badge rounded-pill status-badge ms-2"
+                                  th:classappend="${
+                                    booking.status == 'PAID' ? 'bg-success' : 
+                                    booking.status == 'CONFIRMED' ? 'bg-primary' : 
+                                    booking.status == 'PENDING' ? 'bg-warning' : 
+                                    booking.status == 'CANCELLED' ? 'bg-danger' : 'bg-secondary'
+                                  }"
+                                  th:text="${booking.status}">Status</span>
+                        </p>
+                    </div>
+                    <div class="booking-actions">
+                        <button class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Print
+                        </button>
+                        
+                        <!-- Show different buttons based on booking status -->
+                        <div th:if="${booking.status == 'PENDING'}">
+                            <button class="btn btn-primary" id="confirm-booking-btn">
+                                <i class="fas fa-check me-2"></i>Confirm Booking
+                            </button>
+                            <button class="btn btn-danger" id="cancel-booking-btn">
+                                <i class="fas fa-times me-2"></i>Cancel Booking
+                            </button>
+                        </div>
+                        
+                        <div th:if="${booking.status == 'CONFIRMED'}">
+                            <button class="btn btn-success" id="pay-booking-btn">
+                                <i class="fas fa-credit-card me-2"></i>Pay Now
+                            </button>
+                            <button class="btn btn-danger" id="cancel-booking-btn">
+                                <i class="fas fa-times me-2"></i>Cancel Booking
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Print Header (only visible when printing) -->
+        <section class="py-4 print-only">
+            <div class="container">
+                <div class="text-center">
+                    <h1>Event Ticket System</h1>
+                    <h2>Booking Confirmation</h2>
+                    <p>Booking ID: <span th:text="${booking.bookingId}">123</span></p>
+                    <p>Status: <span th:text="${booking.status}">PAID</span></p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Booking Details -->
+        <section class="py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Event Information</h4>
+                            </div>
+                            <div class="card-body">
+                                <h5 th:text="${event.name}">Event Name</h5>
+                                <p>
+                                    <i class="fas fa-calendar-alt me-2"></i><span th:text="${#temporals.format(event.date, 'dd MMM yyyy')}">Date</span><br>
+                                    <i class="fas fa-clock me-2"></i><span th:text="${event.time}">Time</span><br>
+                                    <i class="fas fa-map-marker-alt me-2"></i><span th:text="${event.venue}">Venue</span>
+                                </p>
+                                
+                                <div class="no-print">
+                                    <a th:href="@{/web/events/{id}(id=${event.id})}" class="btn btn-outline-primary">
+                                        <i class="fas fa-info-circle me-2"></i>View Event Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Tickets</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row row-cols-1 row-cols-md-2 g-4">
+                                    <div class="col" th:each="ticket : ${booking.tickets}">
+                                        <div class="card h-100 ticket-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title" th:text="${ticket.type}">VIP</h5>
+                                                <p class="card-text">
+                                                    <span th:if="${ticket.section}">
+                                                        Section: <span th:text="${ticket.section}">A</span><br>
+                                                        Seat: <span th:text="${ticket.seatNumber}">A1</span><br>
+                                                    </span>
+                                                    Price: <span th:text="${'฿' + ticket.price}">฿5,000</span><br>
+                                                    Status: <span th:text="${ticket.status}">SOLD</span>
+                                                </p>
+                                                
+                                                <div th:if="${ticket.qrCode}" class="text-center mt-3">
+                                                    <img th:src="${ticket.qrCode}" alt="QR Code" class="img-fluid qr-code">
+                                                    <p class="small text-muted mt-2">Scan this QR code at the venue entrance</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Booking Summary</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Booking Date:</span>
+                                    <span th:text="${#temporals.format(booking.createdAt, 'dd MMM yyyy HH:mm')}">15 May 2025 10:30</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Booking ID:</span>
+                                    <span th:text="${booking.bookingId}">123</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Status:</span>
+                                    <span th:text="${booking.status}">PAID</span>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h5>Ticket Summary</h5>
+                                <div th:each="ticket : ${booking.tickets}" class="d-flex justify-content-between mb-2">
+                                    <span th:text="${ticket.type + (ticket.section ? ' (' + ticket.section + '-' + ticket.seatNumber + ')' : '')}">VIP (A-A1)</span>
+                                    <span th:text="${'฿' + ticket.price}">฿5,000</span>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="d-flex justify-content-between mb-2 fw-bold">
+                                    <span>Total Amount:</span>
+                                    <span th:text="${'฿' + booking.totalAmount}">฿10,000</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4 no-print">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Need Help?</h4>
+                            </div>
+                            <div class="card-body">
+                                <p>If you have any questions about your booking, please contact our support team or use our chatbot.</p>
+                                <div class="d-grid gap-2">
+                                    <a th:href="@{/web/chatbot}" class="btn btn-outline-primary">
+                                        <i class="fas fa-robot me-2"></i>Chat with Support
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Payment Modal -->
+        <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="paymentModalLabel">Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="payment-form">
+                            <div class="mb-3">
+                                <label for="payment-method" class="form-label">Payment Method</label>
+                                <select class="form-select" id="payment-method" required>
+                                    <option value="">Select payment method</option>
+                                    <option value="CREDIT_CARD">Credit Card</option>
+                                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                                    <option value="MOBILE_PAYMENT">Mobile Payment</option>
+                                    <option value="E_WALLET">E-Wallet</option>
+                                </select>
+                            </div>
+                            
+                            <div id="credit-card-fields" class="d-none">
+                                <div class="mb-3">
+                                    <label for="card-number" class="form-label">Card Number</label>
+                                    <input type="text" class="form-control" id="card-number" placeholder="1234 5678 9012 3456">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="expiry-date" class="form-label">Expiry Date</label>
+                                        <input type="text" class="form-control" id="expiry-date" placeholder="MM/YY">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="cvv" class="form-label">CVV</label>
+                                        <input type="text" class="form-control" id="cvv" placeholder="123">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="card-holder" class="form-label">Card Holder Name</label>
+                                    <input type="text" class="form-control" id="card-holder" placeholder="John Doe">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Amount</label>
+                                <input type="text" class="form-control" id="amount" th:value="${'฿' + booking.totalAmount}" readonly>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="process-payment-btn">Process Payment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </content>
+    
+    <additionalJs>
+        <!-- Additional JS for this page -->
+        <script th:inline="javascript">
+            $(document).ready(function() {
+                const bookingId = [[${booking.bookingId}]];
+                
+                // Confirm booking button
+                $('#confirm-booking-btn').on('click', function() {
+                    $.ajax({
+                        url: '/ticket-service/api/bookings/' + bookingId + '/confirm',
+                        type: 'PUT',
+                        success: function(response) {
+                            window.location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Error confirming booking: ' + error);
+                        }
+                    });
+                });
+                
+                // Cancel booking button
+                $('#cancel-booking-btn').on('click', function() {
+                    if (confirm('Are you sure you want to cancel this booking?')) {
+                        $.ajax({
+                            url: '/ticket-service/api/bookings/' + bookingId,
+                            type: 'DELETE',
+                            success: function(response) {
+                                window.location.reload();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('Error cancelling booking: ' + error);
+                            }
+                        });
+                    }
+                });
+                
+                // Pay booking button
+                $('#pay-booking-btn').on('click', function() {
+                    $('#paymentModal').modal('show');
+                });
+                
+                // Payment method change
+                $('#payment-method').on('change', function() {
+                    if ($(this).val() === 'CREDIT_CARD') {
+                        $('#credit-card-fields').removeClass('d-none');
+                    } else {
+                        $('#credit-card-fields').addClass('d-none');
+                    }
+                });
+                
+                // Process payment button
+                $('#process-payment-btn').on('click', function() {
+                    const paymentMethod = $('#payment-method').val();
+                    
+                    if (!paymentMethod) {
+                        alert('Please select a payment method');
+                        return;
+                    }
+                    
+                    // Prepare payment data
+                    const paymentData = {
+                        method: paymentMethod,
+                        details: paymentMethod === 'CREDIT_CARD' ? 
+                            $('#card-number').val() + ' (Exp: ' + $('#expiry-date').val() + ')' : 
+                            'Payment via ' + paymentMethod
+                    };
+                    
+                    // Send payment request
+                    $.ajax({
+                        url: '/ticket-service/api/bookings/' + bookingId + '/payment',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(paymentData),
+                        success: function(response) {
+                            $('#paymentModal').modal('hide');
+                            window.location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Error processing payment: ' + error);
+                        }
+                    });
+                });
+            });
+        </script>
+    </additionalJs>
+</body>
+</html>

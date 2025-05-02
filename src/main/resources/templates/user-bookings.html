@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='My Bookings', 
+                                  content=~{::content}, 
+                                  additionalCss=~{::additionalCss}, 
+                                  additionalJs=~{::additionalJs})}">
+<head>
+    <additionalCss>
+        <!-- Additional CSS for this page -->
+        <style>
+            .booking-card {
+                transition: transform 0.3s;
+            }
+            .booking-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+            .status-badge {
+                font-size: 0.8rem;
+                padding: 0.25rem 0.5rem;
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <!-- User Bookings Header -->
+        <section class="py-4">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1>My Bookings</h1>
+                        <p class="lead">View and manage your event bookings</p>
+                    </div>
+                </div>
+                
+                <!-- No Bookings Message -->
+                <div th:if="${#lists.isEmpty(bookings)}" class="alert alert-info">
+                    <p class="mb-0">You don't have any bookings yet. <a th:href="@{/web}">Browse events</a> to book tickets.</p>
+                </div>
+                
+                <!-- Bookings List -->
+                <div th:unless="${#lists.isEmpty(bookings)}" class="row row-cols-1 row-cols-md-2 g-4">
+                    <div class="col" th:each="booking : ${bookings}">
+                        <div class="card booking-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" th:text="${booking.eventName}">Event Name</h5>
+                                <span class="badge rounded-pill status-badge"
+                                      th:classappend="${
+                                        booking.status == 'PAID' ? 'bg-success' : 
+                                        booking.status == 'CONFIRMED' ? 'bg-primary' : 
+                                        booking.status == 'PENDING' ? 'bg-warning' : 
+                                        booking.status == 'CANCELLED' ? 'bg-danger' : 'bg-secondary'
+                                      }"
+                                      th:text="${booking.status}">Status</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    <span th:text="${#temporals.format(booking.createdAt, 'dd MMM yyyy')}">Booking Date</span>
+                                </p>
+                                
+                                <h6>Tickets:</h6>
+                                <ul class="list-group list-group-flush mb-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center" 
+                                        th:each="ticket : ${booking.tickets}">
+                                        <span>
+                                            <span th:text="${ticket.type}">VIP</span>
+                                            <small class="text-muted" th:if="${ticket.section}">
+                                                (Section <span th:text="${ticket.section}">A</span>, 
+                                                Seat <span th:text="${ticket.seatNumber}">A1</span>)
+                                            </small>
+                                        </span>
+                                        <span th:text="${'฿' + ticket.price}">฿5,000</span>
+                                    </li>
+                                </ul>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Total:</span>
+                                    <span class="fw-bold" th:text="${'฿' + booking.totalAmount}">฿10,000</span>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white border-top-0">
+                                <div class="d-grid gap-2">
+                                    <a th:href="@{/web/bookings/{id}(id=${booking.bookingId})}" class="btn btn-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </content>
+    
+    <additionalJs>
+        <!-- Additional JS for this page -->
+        <script>
+            $(document).ready(function() {
+                console.log('User bookings page loaded');
+            });
+        </script>
+    </additionalJs>
+</body>
+</html>

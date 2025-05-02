@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${event.name} + ' - Event Details', 
+                                  content=~{::content}, 
+                                  additionalCss=~{::additionalCss}, 
+                                  additionalJs=~{::additionalJs})}">
+<head>
+    <additionalCss>
+        <!-- Additional CSS for this page -->
+        <style>
+            .event-header {
+                background-size: cover;
+                background-position: center;
+                color: white;
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+                position: relative;
+            }
+            .event-header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 0;
+            }
+            .event-header-content {
+                position: relative;
+                z-index: 1;
+            }
+            .ticket-type {
+                transition: transform 0.3s;
+            }
+            .ticket-type:hover {
+                transform: translateY(-5px);
+            }
+        </style>
+    </additionalCss>
+</head>
+<body>
+    <content>
+        <!-- Event Header -->
+        <section class="event-header py-5 mb-5 rounded" th:style="'background-image: url(' + ${event.imageUrl ?: 'https://via.placeholder.com/1200x400?text=Event+Banner'} + ');'">
+            <div class="container event-header-content">
+                <h1 class="display-4" th:text="${event.name}">Event Name</h1>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <p class="lead">
+                            <i class="fas fa-map-marker-alt me-2"></i><span th:text="${event.venue}">Venue</span>
+                        </p>
+                        <p class="lead">
+                            <i class="fas fa-calendar-alt me-2"></i><span th:text="${#temporals.format(event.date, 'dd MMM yyyy')}">Date</span>
+                        </p>
+                        <p class="lead">
+                            <i class="fas fa-clock me-2"></i><span th:text="${event.time}">Time</span>
+                            <span th:if="${event.duration}" class="ms-2">
+                                (<span th:text="${event.duration}"></span> minutes)
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <a th:href="@{/web/events/{id}/book(id=${event.id})}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-ticket-alt me-2"></i>Book Tickets
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Event Details -->
+        <section class="py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h2>About This Event</h2>
+                        <p th:text="${event.description}">Event description...</p>
+                        
+                        <h3 class="mt-4">Artists</h3>
+                        <ul class="list-group list-group-flush mb-4">
+                            <li class="list-group-item" th:each="artist : ${event.artists}" th:text="${artist}">Artist Name</li>
+                        </ul>
+                        
+                        <h3 class="mt-4">Organizer</h3>
+                        <p th:text="${event.organizer}">Organizer name</p>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Ticket Availability</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Total Tickets:</span>
+                                    <span th:text="${availability.totalTickets}">100</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Available:</span>
+                                    <span th:text="${availability.availableTickets}">75</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Sold:</span>
+                                    <span th:text="${availability.soldTickets}">25</span>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h5 class="mt-3">Availability by Type</h5>
+                                <div th:each="entry : ${availability.availabilityByType}" class="d-flex justify-content-between mb-2">
+                                    <span th:text="${entry.key}">VIP</span>
+                                    <span th:text="${entry.value}">10</span>
+                                </div>
+                                
+                                <div class="d-grid gap-2 mt-4">
+                                    <a th:href="@{/web/events/{id}/book(id=${event.id})}" class="btn btn-primary">
+                                        Book Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                <h4 class="mb-0">Event Details</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Category:</span>
+                                    <span th:text="${event.category}">Concert</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Status:</span>
+                                    <span th:text="${event.status}">UPCOMING</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Ticket Types -->
+        <section class="py-4 bg-light rounded">
+            <div class="container">
+                <h2 class="mb-4">Ticket Types</h2>
+                
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    <div class="col" th:each="ticketType : ${event.ticketTypes}">
+                        <div class="card h-100 ticket-type">
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${ticketType.name}">VIP</h5>
+                                <h6 class="card-subtitle mb-2 text-muted" th:text="${'฿' + ticketType.price}">฿5,000</h6>
+                                <p class="card-text" th:text="${ticketType.description}">Description</p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <span th:if="${availability.availabilityByType.containsKey(ticketType.name)}">
+                                            <span th:text="${availability.availabilityByType.get(ticketType.name)}">10</span> tickets available
+                                        </span>
+                                        <span th:unless="${availability.availabilityByType.containsKey(ticketType.name)}">
+                                            Sold out
+                                        </span>
+                                    </small>
+                                </p>
+                            </div>
+                            <div class="card-footer bg-white border-top-0">
+                                <div class="d-grid gap-2">
+                                    <a th:href="@{/web/events/{id}/book(id=${event.id})}" 
+                                       class="btn btn-outline-primary"
+                                       th:classappend="${!availability.availabilityByType.containsKey(ticketType.name) ? 'disabled' : ''}">
+                                        Select
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </content>
+    
+    <additionalJs>
+        <!-- Additional JS for this page -->
+        <script>
+            $(document).ready(function() {
+                console.log('Event details page loaded');
+            });
+        </script>
+    </additionalJs>
+</body>
+</html>
