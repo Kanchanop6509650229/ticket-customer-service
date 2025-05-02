@@ -348,12 +348,13 @@
                         return;
                     }
 
+                    // Generate a unique payment ID (in a real system, this would come from the payment gateway)
+                    const uniquePaymentId = 'txn_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+
                     // Prepare payment data
                     const paymentData = {
-                        method: paymentMethod,
-                        details: paymentMethod === 'CREDIT_CARD' ?
-                            $('#card-number').val() + ' (Exp: ' + $('#expiry-date').val() + ')' :
-                            'Payment via ' + paymentMethod
+                        paymentId: uniquePaymentId, // Add the required paymentId field
+                        method: paymentMethod
                     };
 
                     // Send payment request
