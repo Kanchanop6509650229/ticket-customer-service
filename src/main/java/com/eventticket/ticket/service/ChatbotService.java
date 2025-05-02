@@ -240,13 +240,37 @@ public class ChatbotService {
 
             return response;
         } catch (Exception e) {
-            log.error("Error calling DeepSeek API", e);
+            System.err.println("Error calling DeepSeek API: " + e.getMessage());
 
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();
-            response.setAnswer(
-                    "Sorry, the system is temporarily unavailable. Please try again later or contact customer service at support@eventticket.com");
+
+            // Create a more helpful fallback response
+            String fallbackAnswer = "I'm sorry, but I'm having trouble connecting to my knowledge base at the moment. " +
+                    "This could be due to network issues or high demand. " +
+                    "In the meantime, you can:\n\n" +
+                    "• Try asking a different question\n" +
+                    "• Check our FAQ section on the website\n" +
+                    "• Contact customer service at support@eventticket.com\n" +
+                    "• Try again in a few minutes";
+
+            response.setAnswer(fallbackAnswer);
             response.setConfidence(0.5);
+
+            // Add some helpful FAQs
+            List<ChatbotResponse.FAQ> fallbackFaqs = new ArrayList<>();
+            ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+            faq1.setQuestion("View frequently asked questions");
+            faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq1);
+
+            ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+            faq2.setQuestion("Contact customer support");
+            faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq2);
+
+            response.setRelatedFaq(fallbackFaqs);
+
             return response;
         }
     }
@@ -304,13 +328,37 @@ public class ChatbotService {
 
             return response;
         } catch (Exception e) {
-            log.error("Error calling DeepSeek API for event info", e);
+            System.err.println("Error calling DeepSeek API for event info: " + e.getMessage());
 
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();
-            response.setAnswer(
-                    "Sorry, the system is temporarily unavailable. Please try again later or contact customer service at support@eventticket.com");
+
+            // Create a more helpful fallback response
+            String fallbackAnswer = "I'm sorry, but I'm having trouble retrieving event information at the moment. " +
+                    "This could be due to network issues or high demand. " +
+                    "In the meantime, you can:\n\n" +
+                    "• Try asking a different question\n" +
+                    "• Browse events on our main page\n" +
+                    "• Contact customer service at support@eventticket.com\n" +
+                    "• Try again in a few minutes";
+
+            response.setAnswer(fallbackAnswer);
             response.setConfidence(0.5);
+
+            // Add some helpful FAQs
+            List<ChatbotResponse.FAQ> fallbackFaqs = new ArrayList<>();
+            ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+            faq1.setQuestion("Browse all events");
+            faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq1);
+
+            ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+            faq2.setQuestion("Contact customer support");
+            faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq2);
+
+            response.setRelatedFaq(fallbackFaqs);
+
             return response;
         }
     }
@@ -719,13 +767,36 @@ public class ChatbotService {
         } catch (Exception e) {
             // Log error
             System.err.println("Error calling DeepSeek API for event recommendations: " + e.getMessage());
-            e.printStackTrace();
 
             // Fallback response
             ChatbotResponse response = new ChatbotResponse();
-            response.setAnswer(
-                    "Sorry, I couldn't generate event recommendations at the moment. Please try again later or contact customer service for assistance.");
+
+            // Create a more helpful fallback response
+            String fallbackAnswer = "I'm sorry, but I'm having trouble generating event recommendations at the moment. " +
+                    "This could be due to network issues or high demand. " +
+                    "In the meantime, you can:\n\n" +
+                    "• Browse our featured events on the home page\n" +
+                    "• Search for events by category or date\n" +
+                    "• Contact customer service at support@eventticket.com\n" +
+                    "• Try again in a few minutes";
+
+            response.setAnswer(fallbackAnswer);
             response.setConfidence(0.5);
+
+            // Add some helpful FAQs
+            List<ChatbotResponse.FAQ> fallbackFaqs = new ArrayList<>();
+            ChatbotResponse.FAQ faq1 = new ChatbotResponse.FAQ();
+            faq1.setQuestion("View popular events");
+            faq1.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq1);
+
+            ChatbotResponse.FAQ faq2 = new ChatbotResponse.FAQ();
+            faq2.setQuestion("Search events by category");
+            faq2.setId("faq" + ThreadLocalRandom.current().nextInt(1000));
+            fallbackFaqs.add(faq2);
+
+            response.setRelatedFaq(fallbackFaqs);
+
             return response;
         }
     }
